@@ -1,4 +1,4 @@
-package com.mariosayago.tfg_iiti.model
+package com.mariosayago.tfg_iiti.model.entities
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey
