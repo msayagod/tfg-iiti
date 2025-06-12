@@ -1,4 +1,4 @@
-package com.mariosayago.tfg_iiti.ui.theme
+package com.mariosayago.tfg_iiti.view.theme
 
 import androidx.compose.ui.graphics.Color
 
