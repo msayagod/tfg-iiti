@@ -12,7 +12,6 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Modifier
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -32,7 +31,7 @@ import com.mariosayago.tfg_iiti.view.screens.VisitScheduleScreen
 import dagger.hilt.android.AndroidEntryPoint
 import com.mariosayago.tfg_iiti.viewmodel.MachineViewModel
 import androidx.compose.runtime.getValue
-import com.mariosayago.tfg_iiti.model.relations.MachineWithSlots
+import com.mariosayago.tfg_iiti.view.screens.ProductFormScreen
 
 
 @AndroidEntryPoint
@@ -46,7 +45,6 @@ class MainActivity : ComponentActivity() {
             TfgiitiTheme {
                 // Creo el NavController
                 val navController = rememberNavController()
-
 
                 Scaffold(
                     topBar = {
@@ -121,8 +119,8 @@ class MainActivity : ComponentActivity() {
                             // 2.3.4 Mostramos el detalle de la máquina
                             detail?.let { data ->
                                 MachineDetailScreen(
-                                    machineId     = id,
-                                    onEditClick   = { _ ->
+                                    machineId = id,
+                                    onEditClick = { _ ->
                                         navController.navigate("machine_edit/$id")
                                     },
                                     onDeleteClick = {
@@ -138,7 +136,8 @@ class MainActivity : ComponentActivity() {
                             }
                         }
                         // 2.4 Editar máquina
-                        composable("machine_edit/{machineId}",
+                        composable(
+                            "machine_edit/{machineId}",
                             arguments = listOf(navArgument("machineId") { type = NavType.LongType })
                         ) { back ->
                             val id = back.arguments!!.getLong("machineId")
@@ -150,8 +149,35 @@ class MainActivity : ComponentActivity() {
 
                         // 3. Mis productos
                         composable("product_list") {
-                            ProductListScreen() // mostrar la lista de productos
+                            ProductListScreen(
+                                onAddProduct = { navController.navigate("product_form") },
+                                onEditProduct = { id -> navController.navigate("product_form/$id") }
+                            )
                         }
+
+                        // 3.1 Alta / edición de productos
+                        composable(
+                            "product_form/{productId}",
+                            arguments = listOf(navArgument("productId") {
+                                type = NavType.LongType; defaultValue = -1L
+                            })
+                        ) { back ->
+                            val idArg = back.arguments!!.getLong("productId")
+                            val id = if (idArg >= 0L) idArg else null
+                            ProductFormScreen(
+                                productId = id,
+                                onSave    = { navController.popBackStack() }
+                            )
+                        }
+
+                        // También ruta sin argumentos
+                        composable("product_form") {
+                            ProductFormScreen(
+                                productId = null,
+                                onSave    = { navController.popBackStack() }
+                            )
+                        }
+
                         // 4. Incidencias
                         composable("incident_list") {
                             IncidentListScreen(
@@ -168,13 +194,14 @@ class MainActivity : ComponentActivity() {
                                 type = NavType.LongType
                             })
                         ) { back ->
-                            val incidentId = back.arguments?.getLong("incidentId") ?: return@composable
+                            val incidentId =
+                                back.arguments?.getLong("incidentId") ?: return@composable
                             IncidentDetailScreen(incidentId = incidentId)
                         }
                     }
 
-                    }
                 }
             }
         }
     }
+}

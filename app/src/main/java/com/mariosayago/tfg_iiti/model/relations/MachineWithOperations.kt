@@ -1,9 +1,8 @@
 package com.mariosayago.tfg_iiti.model.relations
 
-import androidx.room.Embedded
+
 import androidx.room.Junction
 import androidx.room.Relation
-import com.mariosayago.tfg_iiti.model.entities.Machine
 import com.mariosayago.tfg_iiti.model.entities.Operation
 import com.mariosayago.tfg_iiti.model.entities.Slot
 
