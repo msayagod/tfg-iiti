@@ -29,6 +29,8 @@ fun ProductListScreen(
     viewModel: ProductViewModel = hiltViewModel()
 ) {
     val products by viewModel.products.collectAsState()
+
+
     //Box con la lista de productos y un botón para añadir y otro para editar
     Box(Modifier.fillMaxSize()) {
         LazyColumn {
