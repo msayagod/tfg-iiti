@@ -70,7 +70,7 @@ fun ProductFormScreen(
                 if (isEditing) {
                     viewModel.update(Product(id = productId, name = name, price = price))
                 } else {
-                    viewModel.insert(Product(name = name, price = price))
+                    viewModel.insert(Product(name = name, price = price, imagePath = null))
                 }
                 onSave()
             },

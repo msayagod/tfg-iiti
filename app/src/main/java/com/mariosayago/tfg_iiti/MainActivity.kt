@@ -34,6 +34,8 @@ import androidx.compose.runtime.getValue
 import com.mariosayago.tfg_iiti.view.screens.ClosedIncidentListScreen
 import com.mariosayago.tfg_iiti.view.screens.IncidentFormScreen
 import com.mariosayago.tfg_iiti.view.screens.ProductFormScreen
+import com.mariosayago.tfg_iiti.view.screens.SlotFormScreen
+import com.mariosayago.tfg_iiti.view.screens.SlotListScreen
 
 
 @AndroidEntryPoint
@@ -93,14 +95,29 @@ class MainActivity : ComponentActivity() {
                                 onMachineClick = { MachinesId: Long ->
                                     navController.navigate("machine_detail/$MachinesId") // Navegar a la pantalla de detalle de máquina
                                 },
-                                onAddMachineClick = { navController.navigate("machine_form") } // Navegar a la pantalla de añadir máquina
+                                onAddMachineClick = {
+                                    // al navegar sin parámetro, caemos en defaultValue = -1L
+                                    navController.navigate("machine_form/-1") // Navegar a la pantalla de añadir máquina
+                                }
                             )
                         }
 
-                        // 2.2 Añadir máquinas
-                        composable("machine_form") {
+                        // 2. Alta / Edición de máquina
+                        composable(
+                            route = "machine_form/{machineId}",
+                            arguments = listOf(
+                                navArgument("machineId") {
+                                    type = NavType.LongType
+                                    defaultValue = -1L
+                                }
+                            )
+                        ) { back ->
+                            // el parámetro siempre existe: -1 → creación, >=0 → edición
+                            val raw = back.arguments!!.getLong("machineId")
+                            val id = raw.takeIf { it >= 0L }      // null si raw==-1
                             MachineFormScreen(
-                                onSave = { navController.popBackStack() } // Volver a la lista de máquinas al guardar nueva máquina
+                                machineId = id,
+                                onSave = { navController.popBackStack() }
                             )
                         }
 
@@ -122,8 +139,8 @@ class MainActivity : ComponentActivity() {
                             detail?.let { data ->
                                 MachineDetailScreen(
                                     machineId = id,
-                                    onEditClick = { _ ->
-                                        navController.navigate("machine_edit/$id")
+                                    onEditClick = { mid ->
+                                        navController.navigate("machine_form/$mid")
                                     },
                                     onDeleteClick = {
                                         // 1) Borramos primero
@@ -135,25 +152,44 @@ class MainActivity : ComponentActivity() {
                                         }
                                     },
 
+                                    onEditSlotsClick = { mid ->
+                                        navController.navigate("slot_list/$mid")
+                                    },
+
                                     onNewIncidentClick = { mid ->
                                         navController.navigate("incident_form/$mid")  // aquí navegas a crear incidencia
                                     }
                                 )
                             }
                         }
-                        // 2.4 Editar máquina
+
+                        // 3. Slots
                         composable(
-                            "machine_edit/{machineId}",
-                            arguments = listOf(navArgument("machineId") { type = NavType.LongType })
+                            "slot_list/{machineId}",
+                            arguments = listOf(navArgument("machineId"){ type = NavType.LongType })
                         ) { back ->
-                            val id = back.arguments!!.getLong("machineId")
-                            MachineFormScreen(
-                                machineId = id,
-                                onSave = { navController.popBackStack() }
+                            val mId = back.arguments!!.getLong("machineId")
+                            SlotListScreen(
+                                machineId = mId,
+                                onSlotClick = { slotId ->
+                                    navController.navigate("slot_form/$slotId")
+                                }
+                            )
+                        }
+                        composable(
+                            "slot_form/{slotId}",
+                            arguments = listOf(navArgument("slotId"){ type = NavType.LongType })
+                        ) { back ->
+                            val sId = back.arguments!!.getLong("slotId")
+                            SlotFormScreen(
+                                slotId = sId,
+                                onSave = { navController.popBackStack() },
+                                onAddProduct = { navController.navigate("product_form") }
                             )
                         }
 
-                        // 3. Mis productos
+
+                        // 4. Mis productos
                         composable("product_list") {
                             ProductListScreen(
                                 onAddProduct = { navController.navigate("product_form") },
@@ -161,7 +197,7 @@ class MainActivity : ComponentActivity() {
                             )
                         }
 
-                        // 3.1 Alta / edición de productos
+                        // 4.1 Alta / edición de productos
                         composable(
                             "product_form/{productId}",
                             arguments = listOf(navArgument("productId") {
@@ -184,7 +220,7 @@ class MainActivity : ComponentActivity() {
                             )
                         }
 
-                        // 4. Incidencias abiertas
+                        // 5. Incidencias abiertas
                         composable("incident_list") {
                             IncidentListScreen(
                                 onIncidentClick = { incidentId: Long ->
@@ -194,7 +230,7 @@ class MainActivity : ComponentActivity() {
                             )
                         }
 
-                        // 4.1 Incidencias cerradas
+                        // 5.1 Incidencias cerradas
                         composable("incident_closed_list") {
                             ClosedIncidentListScreen(
                                 onIncidentClick = { incidentId ->
@@ -203,7 +239,7 @@ class MainActivity : ComponentActivity() {
                             )
                         }
 
-                        // 4.2 Detalle de incidencia
+                        // 5.2 Detalle de incidencia
                         composable(
                             "incident_detail/{incidentId}",
                             arguments = listOf(navArgument("incidentId") {
@@ -218,7 +254,7 @@ class MainActivity : ComponentActivity() {
                             )
                         }
 
-                        // 4.3 Nueva incidencia
+                        // 5.3 Nueva incidencia
                         composable(
                             "incident_form/{machineId}",
                             arguments = listOf(

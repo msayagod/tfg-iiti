@@ -25,6 +25,9 @@ class MachineRepository(private val machineDao: MachineDao) {
     fun getMachineWithSlotAndProductList(machineId: Long): Flow<List<MachineWithSlotAndProduct>> =
         machineDao.getMachineWithSlotAndProductList(machineId)
 
+    fun getMachineById(id: Long): Flow<Machine> =
+        machineDao.getMachineById(id)
+
     suspend fun insertMachine(machine: Machine): Long =
         machineDao.insertMachine(machine)
 

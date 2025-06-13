@@ -13,6 +13,9 @@ class SlotRepository(private val slotDao: SlotDao) {
     fun getSlotWithProduct(slotId: Long): Flow<SlotWithProduct> =
         slotDao.getSlotWithProduct(slotId)
 
+    fun getSlotsWithProductByMachine(machineId: Long): Flow<List<SlotWithProduct>> =
+        slotDao.getSlotsWithProductByMachine(machineId)
+
     suspend fun insertSlot(slot: Slot): Long =
         slotDao.insertSlot(slot)
 

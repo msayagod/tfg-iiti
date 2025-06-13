@@ -46,4 +46,7 @@ interface MachineDao {
     @Query("SELECT * FROM machines WHERE id = :machineId")
     fun getMachineWithSlotAndProductList(machineId: Long): Flow<List<MachineWithSlotAndProduct>>
 
+    @Query("SELECT * FROM machines WHERE id = :machineId")
+    fun getMachineById(machineId: Long): Flow<Machine>
+
 }

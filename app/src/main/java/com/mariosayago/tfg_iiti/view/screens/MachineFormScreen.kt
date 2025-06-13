@@ -21,10 +21,31 @@ fun MachineFormScreen(
     onSave: () -> Unit,
     viewModel: MachineViewModel = hiltViewModel()
 ) {
+
+    // 1) Flow que emite la máquina (o null si es creación)
+    val existingMachine by if (machineId != null) {
+        viewModel.getMachineById(machineId)
+            .collectAsState(initial = null)
+    } else {
+        // dummy state para un solo valor null
+        remember { mutableStateOf<Machine?>(null) }
+    }
+
+    // Campos del formulario
     var name by remember { mutableStateOf("") }
     var location by remember { mutableStateOf("") }
     var rows by remember { mutableStateOf("") }
     var columns by remember { mutableStateOf("") }
+
+// 3) Cuando existingMachine cambie de null → non-null, rellenamos los campos
+    LaunchedEffect(existingMachine) {
+        existingMachine?.let { m ->
+            name     = m.name
+            location = m.location
+            rows     = m.rows.toString()
+            columns  = m.columns.toString()
+        }
+    }
 
     Column(Modifier.padding(16.dp)) {
         OutlinedTextField(
@@ -68,23 +89,27 @@ fun MachineFormScreen(
         )
         Button(
             onClick = {
-                val r = rows.toIntOrNull() ?: 0
+                val r = rows.toIntOrNull()    ?: 0
                 val c = columns.toIntOrNull() ?: 0
-                viewModel.insert(
-                    Machine(
-                        name = name,
-                        location = location,
-                        rows = r,
-                        columns = c
-                    )
+                val machine = Machine(
+                    id       = machineId ?: 0L,
+                    name     = name,
+                    location = location,
+                    rows     = r,
+                    columns  = c
                 )
+                if (machineId == null) {
+                    viewModel.insert(machine)
+                } else {
+                    viewModel.update(machine)
+                }
                 onSave()
             },
             modifier = Modifier
-                .padding(top = 16.dp)
                 .fillMaxWidth()
+                .padding(top = 16.dp)
         ) {
-            Text("Guardar")
+            Text(if (machineId == null) "Crear" else "Guardar cambios")
         }
     }
 }

@@ -5,7 +5,6 @@ import androidx.lifecycle.viewModelScope
 import com.mariosayago.tfg_iiti.data.repository.IncidentRepository
 import com.mariosayago.tfg_iiti.model.entities.Machine
 import com.mariosayago.tfg_iiti.model.relations.MachineWithIncidents
-import com.mariosayago.tfg_iiti.model.relations.MachineWithOperations
 import com.mariosayago.tfg_iiti.model.relations.MachineWithSlots
 import com.mariosayago.tfg_iiti.data.repository.MachineRepository
 import com.mariosayago.tfg_iiti.data.repository.ProductRepository
@@ -13,7 +12,6 @@ import com.mariosayago.tfg_iiti.data.repository.SlotRepository
 import com.mariosayago.tfg_iiti.model.entities.Incident
 import com.mariosayago.tfg_iiti.model.entities.Product
 import com.mariosayago.tfg_iiti.model.entities.Slot
-import com.mariosayago.tfg_iiti.model.relations.MachineWithSlotAndProduct
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
@@ -36,6 +34,7 @@ class MachineViewModel @Inject constructor(
     val machines: StateFlow<List<Machine>> = machineRepo.getAllMachines()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
+    /*
     init {
         viewModelScope.launch {
             // 1) Sembrar productos si no hay ninguno
@@ -118,7 +117,7 @@ class MachineViewModel @Inject constructor(
             }
 
         }
-    }
+    } */
 
     // val machines: StateFlow<List<Machine>> = repository.getAllMachines()
     //   .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
@@ -155,4 +154,7 @@ class MachineViewModel @Inject constructor(
             machineRepo.deleteMachine(machine)
         }
     }
+
+    fun getMachineById(id: Long): Flow<Machine> =
+        machineRepo.getMachineById(id)
 }
