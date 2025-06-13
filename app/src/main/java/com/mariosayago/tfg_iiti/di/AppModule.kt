@@ -32,8 +32,8 @@ object AppModule {
     @Provides
     @Singleton
     fun provideAppDatabase(@ApplicationContext ctx: Context): AppDatabase =
-        Room.databaseBuilder(ctx, AppDatabase::class.java, AppDatabase.DB_NAME /*puedes usar "expendedoras_db"*/)
-            .fallbackToDestructiveMigration(false)
+        Room.databaseBuilder(ctx, AppDatabase::class.java, AppDatabase.DB_NAME) // Nombre de la base de datos
+            .fallbackToDestructiveMigration(true) // Permite que se elimine la base de datos y se vuelva a crear
             .build()
 
     /*** DAOs ***/

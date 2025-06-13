@@ -9,5 +9,6 @@ data class Incident(
     val machineId: Long,
     val date: String,
     val type: String, // Por ejemplo: "Error en pago", "Stock incorrecto", etc.
-    val observations:String?
+    val observations:String?,
+    val status: String // "open", "closed"
 )

@@ -9,8 +9,17 @@ class IncidentRepository(private val incidentDao: IncidentDao) {
     fun getIncidentsByMachine(machineId: Long): Flow<List<Incident>> =
         incidentDao.getIncidentsByMachine(machineId)
 
-    fun getIncidentById(id: Long): Flow<Incident> =
+    fun getIncidentById(id: Long): Flow<Incident?> =
         incidentDao.getIncidentById(id)
+
+    fun getOpenIncidents(): Flow<List<Incident>> =
+        incidentDao.getOpenIncidents()
+
+    fun getClosedIncidents(): Flow<List<Incident>> =
+        incidentDao.getClosedIncidents()
+
+    suspend fun updateIncident(incident: Incident) =
+        incidentDao.updateIncident(incident)
 
     suspend fun insertIncident(incident: Incident): Long =
         incidentDao.insertIncident(incident)

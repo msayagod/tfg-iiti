@@ -42,9 +42,9 @@ class MachineViewModel @Inject constructor(
             val existingProducts = productRepo.getAllProducts().first()
             val productIds = if (existingProducts.isEmpty()) {
                 listOf(
-                    productRepo.insertProduct(Product(name="Agua", price=1.00)),
-                    productRepo.insertProduct(Product(name="Café", price=1.50)),
-                    productRepo.insertProduct(Product(name="Refresco", price=1.20))
+                    productRepo.insertProduct(Product(name = "Agua", price = 1.00)),
+                    productRepo.insertProduct(Product(name = "Café", price = 1.50)),
+                    productRepo.insertProduct(Product(name = "Refresco", price = 1.20))
                 )
             } else {
                 existingProducts.map { it.id }
@@ -54,8 +54,22 @@ class MachineViewModel @Inject constructor(
             val existingMachines = machineRepo.getAllMachines().first()
             val machineIds = if (existingMachines.isEmpty()) {
                 listOf(
-                    machineRepo.insertMachine(Machine(name="Máquina A", location="Edificio Principal", rows=3, columns=4)),
-                    machineRepo.insertMachine(Machine(name="Máquina B", location="Planta Baja", rows=2, columns=3))
+                    machineRepo.insertMachine(
+                        Machine(
+                            name = "Máquina A",
+                            location = "Edificio Principal",
+                            rows = 3,
+                            columns = 4
+                        )
+                    ),
+                    machineRepo.insertMachine(
+                        Machine(
+                            name = "Máquina B",
+                            location = "Planta Baja",
+                            rows = 2,
+                            columns = 3
+                        )
+                    )
                 )
             } else {
                 existingMachines.map { it.id }
@@ -93,10 +107,11 @@ class MachineViewModel @Inject constructor(
                 if (incs.isEmpty()) {
                     incidentRepo.insertIncident(
                         Incident(
-                            machineId   = mid,
-                            date        = "2025-06-11T10:00:00",  // ISO de ejemplo
-                            type        = "Stock bajo",
-                            observations= "Nivel de stock menor al mínimo"
+                            machineId = mid,
+                            date = "2025-06-11T10:00:00",  // ISO de ejemplo
+                            type = "Stock bajo",
+                            observations = "Nivel de stock menor al mínimo",
+                            status = "open"
                         )
                     )
                 }
@@ -105,8 +120,8 @@ class MachineViewModel @Inject constructor(
         }
     }
 
-   // val machines: StateFlow<List<Machine>> = repository.getAllMachines()
-     //   .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+    // val machines: StateFlow<List<Machine>> = repository.getAllMachines()
+    //   .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     fun getMachineWithSlots(machineId: Long): Flow<MachineWithSlots> =
         machineRepo.getMachineWithSlots(machineId)

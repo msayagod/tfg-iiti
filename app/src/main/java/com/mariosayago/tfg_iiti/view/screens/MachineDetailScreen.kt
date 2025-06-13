@@ -25,6 +25,7 @@ fun MachineDetailScreen(
     machineId: Long,
     onEditClick: (Long) -> Unit, // Añadir parámetro para editar
     onDeleteClick: (Long) -> Unit, // Añadir parámetro para eliminar
+    onNewIncidentClick: (Long) -> Unit, // Añadir parámetro para nueva incidencia
     viewModel: MachineViewModel = hiltViewModel()
 ) {
     // Recuperamos la lista de máquinas
@@ -47,6 +48,11 @@ fun MachineDetailScreen(
                 Button(onClick = { onDeleteClick(machineId) }) {
                     Text("Eliminar")
                 }
+
+                Button(onClick = { onNewIncidentClick(machineId) }) {
+                    Text("Nueva incidencia")
+                }
+
             }
             Spacer(Modifier.height(16.dp))
 

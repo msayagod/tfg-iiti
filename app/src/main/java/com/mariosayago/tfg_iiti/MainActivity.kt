@@ -31,6 +31,8 @@ import com.mariosayago.tfg_iiti.view.screens.VisitScheduleScreen
 import dagger.hilt.android.AndroidEntryPoint
 import com.mariosayago.tfg_iiti.viewmodel.MachineViewModel
 import androidx.compose.runtime.getValue
+import com.mariosayago.tfg_iiti.view.screens.ClosedIncidentListScreen
+import com.mariosayago.tfg_iiti.view.screens.IncidentFormScreen
 import com.mariosayago.tfg_iiti.view.screens.ProductFormScreen
 
 
@@ -131,6 +133,10 @@ class MainActivity : ComponentActivity() {
                                             popUpTo("machine_list") { inclusive = false }
 
                                         }
+                                    },
+
+                                    onNewIncidentClick = { mid ->
+                                        navController.navigate("incident_form/$mid")  // aquí navegas a crear incidencia
                                     }
                                 )
                             }
@@ -166,7 +172,7 @@ class MainActivity : ComponentActivity() {
                             val id = if (idArg >= 0L) idArg else null
                             ProductFormScreen(
                                 productId = id,
-                                onSave    = { navController.popBackStack() }
+                                onSave = { navController.popBackStack() }
                             )
                         }
 
@@ -174,20 +180,30 @@ class MainActivity : ComponentActivity() {
                         composable("product_form") {
                             ProductFormScreen(
                                 productId = null,
-                                onSave    = { navController.popBackStack() }
+                                onSave = { navController.popBackStack() }
                             )
                         }
 
-                        // 4. Incidencias
+                        // 4. Incidencias abiertas
                         composable("incident_list") {
                             IncidentListScreen(
                                 onIncidentClick = { incidentId: Long ->
                                     navController.navigate("incident_detail/$incidentId") // Navegar a la pantalla de detalle de incidencia
+                                },
+                                onViewClosed = { navController.navigate("incident_closed_list") }
+                            )
+                        }
+
+                        // 4.1 Incidencias cerradas
+                        composable("incident_closed_list") {
+                            ClosedIncidentListScreen(
+                                onIncidentClick = { incidentId ->
+                                    navController.navigate("incident_detail/$incidentId")
                                 }
                             )
                         }
 
-                        // Detalle de incidencia
+                        // 4.2 Detalle de incidencia
                         composable(
                             "incident_detail/{incidentId}",
                             arguments = listOf(navArgument("incidentId") {
@@ -196,8 +212,27 @@ class MainActivity : ComponentActivity() {
                         ) { back ->
                             val incidentId =
                                 back.arguments?.getLong("incidentId") ?: return@composable
-                            IncidentDetailScreen(incidentId = incidentId)
+                            IncidentDetailScreen(
+                                incidentId = incidentId,
+                                onBack = { navController.popBackStack() }
+                            )
                         }
+
+                        // 4.3 Nueva incidencia
+                        composable(
+                            "incident_form/{machineId}",
+                            arguments = listOf(
+                                navArgument("machineId") { type = NavType.LongType }
+                            )
+                        ) { back ->
+                            val mId = back.arguments!!.getLong("machineId")
+                            IncidentFormScreen(
+                                machineId = mId,
+                                onSave = { navController.popBackStack() }
+                            )
+                        }
+
+
                     }
 
                 }
