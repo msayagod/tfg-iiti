@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Button
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
@@ -21,7 +22,6 @@ fun MachineFormScreen(
     onSave: () -> Unit,
     viewModel: MachineViewModel = hiltViewModel()
 ) {
-
     // 1) Flow que emite la máquina (o null si es creación)
     val existingMachine by if (machineId != null) {
         viewModel.getMachineById(machineId)
@@ -37,7 +37,23 @@ fun MachineFormScreen(
     var rows by remember { mutableStateOf("") }
     var columns by remember { mutableStateOf("") }
 
-// 3) Cuando existingMachine cambie de null → non-null, rellenamos los campos
+    // Rango válido para filas/columnas
+    val minSize = 1
+    val maxSize = 12
+
+    // Valores numéricos y validaciones
+    val rowsVal  = rows.toIntOrNull()    ?: -1
+    val colsVal  = columns.toIntOrNull() ?: -1
+    val rowsValid = rowsVal in minSize..maxSize
+    val colsValid = colsVal in minSize..maxSize
+
+    // Form válido: textos no vacíos y números en rango
+    val formValid = name.isNotBlank()
+            && location.isNotBlank()
+            && rowsValid
+            && colsValid
+
+    // 3) Cuando existingMachine cambie de null → non-null, rellenamos los campos
     LaunchedEffect(existingMachine) {
         existingMachine?.let { m ->
             name     = m.name
@@ -48,49 +64,91 @@ fun MachineFormScreen(
     }
 
     Column(Modifier.padding(16.dp)) {
+        // Nombre
         OutlinedTextField(
             value = name,
             onValueChange = { name = it },
             label = { Text("Nombre") },
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxWidth(),
+            isError = name.isBlank()
         )
+        if (name.isBlank()) {
+            Text(
+                "El nombre no puede estar vacío",
+                color = MaterialTheme.colorScheme.error,
+                style = MaterialTheme.typography.bodySmall,
+                modifier = Modifier.padding(start = 16.dp, top = 4.dp)
+            )
+        }
+
+        // Ubicación
         OutlinedTextField(
             value = location,
             onValueChange = { location = it },
             label = { Text("Ubicación") },
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(top = 8.dp)
+                .padding(top = 8.dp),
+            isError = location.isBlank()
         )
-        // Filas: solo digitos
+        if (location.isBlank()) {
+            Text(
+                "La ubicación no puede estar vacía",
+                color = MaterialTheme.colorScheme.error,
+                style = MaterialTheme.typography.bodySmall,
+                modifier = Modifier.padding(start = 16.dp, top = 4.dp)
+            )
+        }
+
+        // Filas
         OutlinedTextField(
             value = rows,
             onValueChange = { input ->
-                // filtrar cualquier carácter que no sea un dígitp
                 rows = input.filter { it.isDigit() }
             },
             label = { Text("Filas") },
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number), // Solo números
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(top = 8.dp)
+                .padding(top = 8.dp),
+            isError = !rowsValid
         )
-        // Columnas: solo enteros
+        if (!rowsValid) {
+            Text(
+                "Debe estar entre $minSize y $maxSize",
+                color = MaterialTheme.colorScheme.error,
+                style = MaterialTheme.typography.bodySmall,
+                modifier = Modifier.padding(start = 16.dp, top = 4.dp)
+            )
+        }
+
+        // Columnas
         OutlinedTextField(
             value = columns,
             onValueChange = { input ->
                 columns = input.filter { it.isDigit() }
             },
             label = { Text("Columnas") },
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number), // Solo números
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(top = 8.dp)
+                .padding(top = 8.dp),
+            isError = !colsValid
         )
+        if (!colsValid) {
+            Text(
+                "Debe estar entre $minSize y $maxSize",
+                color = MaterialTheme.colorScheme.error,
+                style = MaterialTheme.typography.bodySmall,
+                modifier = Modifier.padding(start = 16.dp, top = 4.dp)
+            )
+        }
+
+        // Botón
         Button(
             onClick = {
-                val r = rows.toIntOrNull()    ?: 0
-                val c = columns.toIntOrNull() ?: 0
+                val r = rowsVal
+                val c = colsVal
                 val machine = Machine(
                     id       = machineId ?: 0L,
                     name     = name,
@@ -99,12 +157,16 @@ fun MachineFormScreen(
                     columns  = c
                 )
                 if (machineId == null) {
-                    viewModel.insert(machine)
+                    // Aquí usamos tu insertAndSeed con callback
+                    viewModel.insertAndSeed(machine) {
+                        onSave()
+                    }
                 } else {
                     viewModel.update(machine)
+                    onSave()
                 }
-                onSave()
             },
+            enabled = formValid,
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(top = 16.dp)
@@ -113,3 +175,5 @@ fun MachineFormScreen(
         }
     }
 }
+
+

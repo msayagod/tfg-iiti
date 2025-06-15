@@ -8,8 +8,8 @@ data class Slot(
     @PrimaryKey(autoGenerate = true) val id: Long = 0L,
     val machineId: Long,
     val productId: Long?,
-    val row: Int,
-    val column: Int,
+    val rowIndex: Int,
+    val colIndex: Int,
     val maxCapacity: Int,
     val currentStock: Int,
     val combinedWithNext: Boolean = false // para indicar si está combinado con el hueco adyacente

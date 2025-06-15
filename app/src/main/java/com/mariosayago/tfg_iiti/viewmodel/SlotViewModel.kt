@@ -39,4 +39,13 @@ class SlotViewModel @Inject constructor(
     fun delete(slot: Slot) {
         viewModelScope.launch { repository.deleteSlot(slot) }
     }
+
+    fun combine(slot: Slot) = viewModelScope.launch {
+        repository.combineSlots(slot.machineId, slot.rowIndex, slot.colIndex)
+    }
+
+    fun uncombine(slot: Slot) = viewModelScope.launch {
+        repository.uncombineSlot(slot.machineId, slot.rowIndex, slot.colIndex)
+    }
+
 }

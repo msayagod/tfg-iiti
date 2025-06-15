@@ -21,7 +21,7 @@ import com.mariosayago.tfg_iiti.model.entities.*
         Visit::class,
         VisitSchedule::class
     ],
-    version = 2, //Cada vez que hago cambios en el modelo, tengo que cambiar la version
+    version = 3, //Cada vez que hago cambios en el modelo, tengo que cambiar la version
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {

@@ -166,22 +166,26 @@ class MainActivity : ComponentActivity() {
                         // 3. Slots
                         composable(
                             "slot_list/{machineId}",
-                            arguments = listOf(navArgument("machineId"){ type = NavType.LongType })
+                            arguments = listOf(navArgument("machineId") { type = NavType.LongType })
                         ) { back ->
                             val mId = back.arguments!!.getLong("machineId")
                             SlotListScreen(
                                 machineId = mId,
                                 onSlotClick = { slotId ->
-                                    navController.navigate("slot_form/$slotId")
+                                    navController.navigate("slot_form/$mId/$slotId")
                                 }
                             )
                         }
                         composable(
-                            "slot_form/{slotId}",
-                            arguments = listOf(navArgument("slotId"){ type = NavType.LongType })
+                            "slot_form/{machineId}/{slotId}",
+                            arguments = listOf(
+                                navArgument("machineId") { type = NavType.LongType },
+                                navArgument("slotId") { type = NavType.LongType })
                         ) { back ->
+                            val machineId = back.arguments!!.getLong("machineId")
                             val sId = back.arguments!!.getLong("slotId")
                             SlotFormScreen(
+                                machineId = machineId,
                                 slotId = sId,
                                 onSave = { navController.popBackStack() },
                                 onAddProduct = { navController.navigate("product_form") }

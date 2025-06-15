@@ -1,5 +1,6 @@
 package com.mariosayago.tfg_iiti.view.screens
 
+import android.widget.Toast
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -21,6 +22,21 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.mariosayago.tfg_iiti.viewmodel.ProductViewModel
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.size
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.material.icons.filled.FileUpload
+import androidx.compose.material.icons.filled.Info
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.TextButton
+import androidx.compose.runtime.*
+
+
 
 @Composable
 fun ProductListScreen(
@@ -29,10 +45,43 @@ fun ProductListScreen(
     viewModel: ProductViewModel = hiltViewModel()
 ) {
     val products by viewModel.products.collectAsState()
+    val context = LocalContext.current // Para acceder al contexto desde el ViewModel
 
 
-    //Box con la lista de productos y un botón para añadir y otro para editar
+    // Launcher para elegir fichero
+    val importLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri ->
+        if (uri == null) return@rememberLauncherForActivityResult
+
+        // 1) Filtrar por extensión
+        val path = uri.lastPathSegment?.lowercase() ?: ""
+        if (!path.endsWith(".csv") && !path.endsWith(".txt")) {
+            Toast.makeText(
+                context,
+                "Formato inválido: sólo .csv o .txt",
+                Toast.LENGTH_LONG
+            ).show()
+            return@rememberLauncherForActivityResult
+        }
+
+        // 2) Intentar parsear / importar
+        val success = viewModel.importFromUri(context, uri)
+        if (!success) {
+            Toast.makeText(
+                context,
+                "Fichero inválido: cada línea debe ser “nombre,precio”",
+                Toast.LENGTH_LONG
+            ).show()
+        }
+    }
+
+    // Control para mostrar/ocultar la mini-instrucción
+    var showInfo by remember { mutableStateOf(false) }
+
+
     Box(Modifier.fillMaxSize()) {
+        // Lista de productos
         LazyColumn {
             items(products) { p ->
                 Text(
@@ -45,15 +94,72 @@ fun ProductListScreen(
                 HorizontalDivider()
             }
         }
-        // Botón para añadir un nuevo producto
-        ExtendedFloatingActionButton(
-            text = { Text("Añadir") },
-            icon = { Icon(Icons.Default.Add, contentDescription = "Añadir") },
-            onClick = onAddProduct,
-            modifier = Modifier
-                .align(Alignment.BottomEnd)
-                .padding(16.dp)
-        )
 
+        // Tamaño de los botones flotante
+        val fabSize = Modifier.size(width = 140.dp, height = 56.dp)
+
+        // Botones flotantes
+        Column(
+            Modifier
+                .align(Alignment.BottomEnd)
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+            horizontalAlignment = Alignment.End
+
+        ) {
+
+            // Botón flotante para añadir un nuevo producto
+            ExtendedFloatingActionButton(
+                modifier = fabSize,
+                text = { Text("Añadir") },
+                icon = { Icon(Icons.Default.Add, contentDescription = "Añadir") },
+                onClick = onAddProduct
+            )
+
+            // Botón flotante para importar un CSV con el info
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(6.dp)
+            ) {
+
+                IconButton(onClick = { showInfo = true }) {
+                    Icon(Icons.Default.Info, contentDescription = "Cómo importar")
+                }
+
+                ExtendedFloatingActionButton(
+                    modifier = fabSize,
+                    icon = { Icon(Icons.Default.FileUpload, contentDescription = "Importar") },
+                    text = { Text("Importar") },
+                    onClick = { importLauncher.launch("text/csv") }
+                )
+
+            }
+        }
+
+        // Diálogo de información
+        if (showInfo) {
+            AlertDialog(
+                onDismissRequest = { showInfo = false },
+                confirmButton = {
+                    TextButton(onClick = { showInfo = false }) {
+                        Text("Entendido")
+                    }
+                },
+                title = { Text("¿Cómo importar?") },
+                text = {
+                    Text(
+                        """
+                        Selecciona un archivo CSV o TXT con el siguiente formato por línea:
+                        nombre,precio
+                        
+                        • nombre: texto (sin comillas)
+                        • precio: número decimal, por ejemplo 1.50
+                        
+                        Si el archivo no cumple este formato, la importación fallará y se mostrará un error.
+                        """.trimIndent()
+                    )
+                }
+            )
+        }
     }
 }

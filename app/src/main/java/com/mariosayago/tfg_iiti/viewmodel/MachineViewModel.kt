@@ -1,5 +1,6 @@
 package com.mariosayago.tfg_iiti.viewmodel
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.mariosayago.tfg_iiti.data.repository.IncidentRepository
@@ -137,15 +138,34 @@ class MachineViewModel @Inject constructor(
         machineRepo.getMachineWithSlotAndProductList(machineId)
 
 
-    fun insert(machine: Machine) {
+    // Funcion insert que inserta una máquina y sus slots
+    fun insertAndSeed(
+        machine: Machine,
+        onComplete: () -> Unit
+    ) {
         viewModelScope.launch {
-            machineRepo.insertMachine(machine)
+            val newId = machineRepo.insertMachine(machine)
+            seedSlotsFor(newId, machine.rows, machine.columns)
+            // cuando termina la siembra, llamamos al callback
+            onComplete()
         }
     }
 
+
+
     fun update(machine: Machine) {
         viewModelScope.launch {
+            // 1) recuperar antiguo para comparar dimensiones
+            val old = machineRepo.getMachineById(machine.id).first()
             machineRepo.updateMachine(machine)
+            if (old.rows != machine.rows ||
+                old.columns != machine.columns
+            ) {
+                // 2) borrar viejos slots
+                slotRepo.deleteSlotsByMachine(machine.id)
+                // 3) sembrar nuevos
+                seedSlotsFor(machine.id, machine.rows, machine.columns)
+            }
         }
     }
 
@@ -157,4 +177,40 @@ class MachineViewModel @Inject constructor(
 
     fun getMachineById(id: Long): Flow<Machine> =
         machineRepo.getMachineById(id)
+
+
+    private suspend fun seedSlotsFor(
+        machineId: Long,
+        rows: Int,
+        columns: Int
+    ) {
+        Log.d("SEED", "🔹 seedSlotsFor START for machine=$machineId, rows=$rows, cols=$columns")
+        try {
+            val products = productRepo.getAllProducts().first()
+            val productIds = products.map { it.id }
+            for (r in 1..rows) {
+                for (c in 1..columns) {
+                    slotRepo.insertSlot(
+                        Slot(
+                            machineId = machineId,
+                            productId = productIds.random(),
+                            rowIndex = r,
+                            colIndex = c,
+                            maxCapacity = 0,
+                            currentStock = 0
+                        )
+                    )
+
+                }
+            }
+
+            // ——— Comprobación de debugging ———
+            val total = slotRepo.getSlotsByMachine(machineId).first()
+            Log.d("SEED", "Sembrados ${total.size} slots (esperados ${rows * columns})")
+        } catch (e: Exception) {
+            Log.e("SEED", "¡ERROR en seedSlotsFor!", e)
+        }
+    }
 }
+
+

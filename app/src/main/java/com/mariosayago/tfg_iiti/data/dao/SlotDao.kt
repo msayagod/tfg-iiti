@@ -24,14 +24,29 @@ interface SlotDao {
     @Delete
     suspend fun deleteSlot(slot: Slot)
 
-    @Query("SELECT * FROM slots WHERE machineId = :machineId ORDER BY 'row' ASC, 'column' ASC")
+    @Query("SELECT * FROM slots WHERE machineId = :machineId ORDER BY rowIndex ASC, colIndex ASC")
     fun getSlotsByMachine(machineId: Long): Flow<List<Slot>>
+
+    @Query("""
+    SELECT * FROM slots
+     WHERE machineId = :machineId
+       AND rowIndex = :row
+       AND colIndex = :nextColumn
+     LIMIT 1
+  """)
+    suspend fun getSlotAt(machineId: Long, row: Int, nextColumn: Int): Slot?
+
+    @Query("DELETE FROM slots WHERE machineId = :machineId")
+    suspend fun deleteSlotsByMachine(machineId: Long)
+
 
     @Transaction
     @Query("SELECT * FROM slots WHERE id = :slotId")
     fun getSlotWithProduct(slotId: Long): Flow<SlotWithProduct>
 
     @Transaction
-    @Query("SELECT * FROM slots WHERE machineId = :machineId ORDER BY 'row' ASC, 'column' ASC")
+    @Query("SELECT * FROM slots WHERE machineId = :machineId ORDER BY rowIndex ASC, colIndex ASC")
     fun getSlotsWithProductByMachine(machineId: Long): Flow<List<SlotWithProduct>>
+
+
 }

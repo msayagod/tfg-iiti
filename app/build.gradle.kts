@@ -75,8 +75,11 @@ dependencies {
     ksp(libs.androidx.hilt.compiler)
     // Navigation parta Jetpack Compose
     implementation(libs.androidx.navigation.compose)
+    // Coil para cargar imágenes
+    implementation(libs.coil.compose)
+    // Para usar iconos extendidos
+    implementation (libs.androidx.material.icons.extended)
 
-    implementation("io.coil-kt:coil-compose:2.4.0")
 
 
 }
