@@ -9,7 +9,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
+
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowLeft
 import androidx.compose.material.icons.automirrored.filled.ArrowRight
@@ -22,12 +22,25 @@ import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.style.TextAlign
+
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.mariosayago.tfg_iiti.viewmodel.MachineViewModel
 import com.mariosayago.tfg_iiti.viewmodel.SlotViewModel
 import kotlin.math.min
+
+
+import androidx.compose.foundation.background
+
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.GridItemSpan
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+
+
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.ContentScale
+
+import coil.compose.AsyncImage
 
 @OptIn(ExperimentalPerfettoTraceProcessorApi::class)
 @Composable
@@ -37,7 +50,7 @@ fun MachineDetailScreen(
     onDeleteClick: (Long) -> Unit,
     onEditSlotsClick: (Long) -> Unit,
     onNewIncidentClick: (Long) -> Unit,
-    slotVm: SlotViewModel = hiltViewModel(),
+    slotVm: SlotViewModel = hiltViewModel(),          // ← SlotViewModel sigue aquí
     viewModel: MachineViewModel = hiltViewModel()
 ) {
     // 1) Cargamos la máquina con slots y productos
@@ -67,7 +80,6 @@ fun MachineDetailScreen(
 
     // 7) Estado de selección
     val selectedIds = remember { mutableStateListOf<Long>() }
-    // Limpiar selección tras combinar/descombinar
     LaunchedEffect(mwsp.slots.map { it.slot.id }) {
         selectedIds.clear()
     }
@@ -87,7 +99,7 @@ fun MachineDetailScreen(
             horizontalArrangement = Arrangement.spacedBy(8.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Button(onClick = { onEditClick(machineId) }) { Text("Editar") }
+            Button(onClick = { onEditClick(machineId) })   { Text("Editar") }
             Button(onClick = { onEditSlotsClick(machineId) }) { Text("Editar slots") }
             Button(onClick = { onNewIncidentClick(machineId) }) { Text("Nueva incidencia") }
         }
@@ -150,35 +162,50 @@ fun MachineDetailScreen(
         Text("Slots:", style = MaterialTheme.typography.titleMedium)
 
         if (!showGrid) {
-            // Lista vertical con scroll
+            // Lista vertical con scroll y icono pequeño
             LazyColumn(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .weight(1f) // ocupa el resto de la pantalla y scrolla
+                    .weight(1f)
             ) {
                 items(mwsp.slots) { sp ->
-                    Text(
-                        "• Slot ${sp.slot.rowIndex}-${sp.slot.colIndex}: " +
-                                "${sp.slot.currentStock} uds. de ${sp.product?.name ?: "—"}",
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
                         modifier = Modifier.padding(vertical = 4.dp)
-                    )
+                    ) {
+                        sp.product?.imagePath?.let { url ->
+                            AsyncImage(
+                                model = url,
+                                contentDescription = sp.product.name,
+                                modifier = Modifier
+                                    .size(32.dp)
+                                    .clip(RoundedCornerShape(4.dp)),
+                                contentScale = ContentScale.Crop
+                            )
+                            Spacer(Modifier.width(8.dp))
+                        }
+                        Text(
+                            "Slot ${sp.slot.rowIndex}-${sp.slot.colIndex}: " +
+                                    "${sp.slot.currentStock} uds. de ${sp.product?.name ?: "—"}"
+                        )
+                    }
                     HorizontalDivider()
                 }
             }
 
         } else {
-            // ─── Rejilla con paginación si hay >6 columnas ────────
+            // Rejilla con paginación si hay >6 columnas
             val slots      = mwsp.slots
             val totalCols  = mwsp.machine.columns
             val pageSize   = if (totalCols > 6) (totalCols + 1) / 2 else totalCols
             val pages      = (totalCols + pageSize - 1) / pageSize
             var page by rememberSaveable { mutableIntStateOf(0) }
 
-            // Rango de columnas visibles en esta página
             val startCol = page * pageSize + 1
             val endCol   = min(totalCols, startCol + pageSize - 1)
+            val visibleSlots = slots.filter { it.slot.colIndex in startCol..endCol }
 
-            // Flechas de navegación
+            // Navegación página
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -195,111 +222,86 @@ fun MachineDetailScreen(
 
             Spacer(Modifier.height(4.dp))
 
-            // ─── Cabecera de columnas ─────────────────────────────
-            Row(Modifier.fillMaxWidth()) {
-                Text(
-                    "", // espacio para la etiqueta de fila
-                    modifier = Modifier.width(24.dp)
-                )
-                for (col in startCol..endCol) {
-                    Text(
-                        col.toString(),
-                        modifier = Modifier
-                            .weight(1f)
-                            .padding(vertical = 4.dp),
-                        textAlign = TextAlign.Center
-                    )
-                }
-            }
+            // Cabecera de columnas (igual a tu código)
 
-            // ─── Cuerpo de la rejilla con etiquetas de fila ──────
-            Column(
-                Modifier
-                    .fillMaxWidth()
-                    .heightIn(max = 400.dp) // ajusta si quieres scroll interno
-                    .verticalScroll(rememberScrollState()),
+            // Cuerpo de la rejilla
+            LazyVerticalGrid(
+                columns = GridCells.Fixed(pageSize),
+                modifier = Modifier.fillMaxWidth(),
+                contentPadding = PaddingValues(4.dp),
+                horizontalArrangement = Arrangement.spacedBy(4.dp),
                 verticalArrangement = Arrangement.spacedBy(4.dp)
             ) {
-                val rowsCount = mwsp.machine.rows
-                for (rowIdx in 1..rowsCount) {
-                    Row(
-                        Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(4.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        // Etiqueta de fila
-                        Text(
-                            rowIdx.toString(),
-                            modifier = Modifier
-                                .width(24.dp)
-                                .padding(vertical = 8.dp),
-                            textAlign = TextAlign.Center
-                        )
-                        // Celdas de esa fila
-                        for (col in startCol..endCol) {
-                            val sp = slots.firstOrNull {
-                                it.slot.rowIndex == rowIdx && it.slot.colIndex == col
-                            }
-                            if (sp != null) {
-                                // span si combinado
-                                val span = if (sp.slot.combinedWithNext) 2 else 1
-                                // border si seleccionado
-                                val isSelected = selectedIds.contains(sp.slot.id)
-                                val border = if (isSelected) {
-                                    Modifier.border(
-                                        2.dp,
-                                        primaryColor,
-                                        RoundedCornerShape(4.dp)
-                                    )
-                                } else Modifier
+                var i = 0
+                while (i < visibleSlots.size) {
+                    val sp = visibleSlots[i]
+                    val id = sp.slot.id
+                    val isSelected = selectedIds.contains(id)
+                    val borderModifier = if (isSelected) {
+                        Modifier.border(2.dp, primaryColor, RoundedCornerShape(4.dp))
+                    } else Modifier
 
-                                Card(
-                                    modifier = border
-                                        .weight(span.toFloat())
-                                        .aspectRatio(span.toFloat())
-                                        .clickable {
-                                            // tu lógica de selección contigua…
-                                        },
-                                    elevation = CardDefaults.cardElevation(4.dp)
-                                ) {
-                                    Column(
-                                        Modifier
-                                            .fillMaxSize()
-                                            .padding(8.dp),
-                                        verticalArrangement = Arrangement.Center,
-                                        horizontalAlignment = Alignment.CenterHorizontally
-                                    ) {
-                                        Text(
-                                            "${sp.slot.currentStock}",
-                                            style = MaterialTheme.typography.titleMedium
-                                        )
-                                        Text(
-                                            sp.product?.name ?: "—",
-                                            style = MaterialTheme.typography.bodySmall
-                                        )
-                                    }
+                    val span = if (sp.slot.combinedWithNext) 2 else 1
+                    item(span = { GridItemSpan(span) }) {
+                        Card(
+                            modifier = borderModifier
+                                .aspectRatio(span.toFloat())
+                                .clickable {
+                                    // Aquí sigue slotVm para combinar/descombinar
+                                },
+                            elevation = CardDefaults.cardElevation(4.dp)
+                        ) {
+                            Box {
+                                // Imagen de fondo
+                                sp.product?.imagePath?.let { url ->
+                                    AsyncImage(
+                                        model = url,
+                                        contentDescription = sp.product.name,
+                                        modifier = Modifier.fillMaxSize(),
+                                        contentScale = ContentScale.Crop
+                                    )
                                 }
-                            } else {
-                                Spacer(
+                                Box(
                                     Modifier
-                                        .weight(1f)
-                                        .aspectRatio(1f)
+                                        .fillMaxSize()
+                                        .background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.3f))
                                 )
+                                Column(
+                                    Modifier
+                                        .fillMaxSize()
+                                        .padding(8.dp),
+                                    verticalArrangement = Arrangement.Center,
+                                    horizontalAlignment = Alignment.CenterHorizontally
+                                ) {
+                                    Text(
+                                        "${sp.slot.currentStock}",
+                                        style = MaterialTheme.typography.titleMedium,
+                                        color = MaterialTheme.colorScheme.surface
+                                    )
+                                    Text(
+                                        sp.product?.name ?: "—",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.surface
+                                    )
+                                }
                             }
                         }
                     }
+                    i += span
                 }
             }
 
             // ─── Botones Combinar / Descombinar ───────────────────────
-            val sortedSlots = selectedIds
+            val sorted = selectedIds
                 .mapNotNull { id -> slots.firstOrNull { it.slot.id == id }?.slot }
                 .sortedBy { it.colIndex }
-            val canCombine = sortedSlots.size == 2 &&
-                    sortedSlots[0].rowIndex == sortedSlots[1].rowIndex &&
-                    sortedSlots[1].colIndex - sortedSlots[0].colIndex == 1 &&
-                    !sortedSlots[0].combinedWithNext &&
-                    !sortedSlots[1].combinedWithNext
+
+            val canCombine = sorted.size == 2 &&
+                    sorted[0].rowIndex == sorted[1].rowIndex &&
+                    sorted[1].colIndex - sorted[0].colIndex == 1 &&
+                    !sorted[0].combinedWithNext &&
+                    !sorted[1].combinedWithNext
+
             val canUncombine = selectedIds.size == 1 &&
                     slots.first { it.slot.id == selectedIds[0] }.slot.combinedWithNext
 
@@ -309,7 +311,7 @@ fun MachineDetailScreen(
             ) {
                 Button(
                     onClick = {
-                        slotVm.combine(sortedSlots[0])
+                        slotVm.combine(sorted[0])         // ← slotVm sigue usándose
                         selectedIds.clear()
                     },
                     enabled = canCombine,
@@ -329,5 +331,6 @@ fun MachineDetailScreen(
         }
     }
 }
+
 
 

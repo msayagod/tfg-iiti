@@ -22,4 +22,11 @@ interface VisitScheduleDao {
 
     @Query("DELETE FROM visit_schedules WHERE id = :scheduleId")
     suspend fun deleteSchedule(scheduleId: Long)
+
+    @Query("SELECT * FROM visit_schedules WHERE machineId = :mid")
+    suspend fun getSchedulesByMachine(mid: Long): List<VisitSchedule>
+
+    @Query("DELETE FROM visit_schedules WHERE machineId = :mid")
+    suspend fun deleteByMachine(mid: Long)
+
 }

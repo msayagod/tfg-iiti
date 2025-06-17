@@ -11,9 +11,15 @@ class VisitScheduleRepository(private val scheduleDao: VisitScheduleDao) {
     fun getSchedulesForMachine(machineId: Long): Flow<List<VisitSchedule>> =
         scheduleDao.getSchedulesForMachine(machineId)
 
-    suspend fun insertSchedule(schedule: VisitSchedule): Long =
-        scheduleDao.insertSchedule(schedule)
+    suspend fun getSchedulesByMachine(mid: Long) = scheduleDao.getSchedulesByMachine(mid)
+
+    suspend fun deleteByMachine(mid: Long) = scheduleDao.deleteByMachine(mid)
+
+    suspend fun insertSchedule(s: VisitSchedule) = scheduleDao.insertSchedule(s)
 
     suspend fun deleteSchedule(scheduleId: Long) =
         scheduleDao.deleteSchedule(scheduleId)
+
+
+
 }

@@ -9,5 +9,5 @@ data class VisitSchedule(
     val machineId: Long,
     val frequency: String, // Ej: "w", "m" (weekly, monthly)
     val daysOfWeek: String, // "1,3,5" → Lunes, Miércoles, Viernes
-    val hour: String? // Puede ser nulo si es libre
+    val dayOfMonth: Int?, //
 )

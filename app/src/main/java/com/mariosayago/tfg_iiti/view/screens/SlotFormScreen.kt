@@ -2,10 +2,8 @@ package com.mariosayago.tfg_iiti.view.screens
 
 
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -33,7 +31,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.runtime.mutableLongStateOf
-import androidx.compose.ui.Alignment
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -68,17 +65,8 @@ fun SlotFormScreen(
         return
     }
 
-    // 3) lista completa de slots para esta máquina
-    val allSlots by slotVm.getSlotsByMachine(machineId)
-        .collectAsState(initial = emptyList())
 
-    // 4) buscamos el hueco a la derecha del slot actual
-    val neighbor = allSlots.firstOrNull {
-        it.rowIndex == slotWithProduct.slot.rowIndex &&
-                it.colIndex == slotWithProduct.slot.colIndex + 1
-    }
-
-    // 5) Estados locales para el dropdown y stock
+    // 3) Estados locales para el dropdown y stock
     var expanded by remember { mutableStateOf(false) }
     var selectedPid by remember {
         mutableLongStateOf(slotWithProduct.slot.productId ?: products.first().id)
@@ -87,7 +75,7 @@ fun SlotFormScreen(
         mutableStateOf(slotWithProduct.slot.currentStock.toString())
     }
 
-    // 6) Nombre visible
+    // 4) Nombre visible
     val selectedName = products.find { it.id == selectedPid }?.name ?: "—"
 
     Column(Modifier.padding(16.dp)) {
@@ -157,59 +145,6 @@ fun SlotFormScreen(
 
         Spacer(Modifier.height(16.dp))
 
-        // Aquí usamos el campo no-null slotWithProduct.slot
-        if (slotWithProduct.slot.combinedWithNext) {
-            // Ya está combinado → botón para descombinar
-            Button(
-                onClick = {
-                    slotVm.uncombine(slotWithProduct.slot)
-                    onSave()
-                },
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Text("Descombinar huecos")
-            }
-        } else {
-            // Sólo permitimos combinar si hay vecino y ninguno está ya combinado
-            val canCombine =
-                neighbor != null &&
-                        !slotWithProduct.slot.combinedWithNext &&
-                        neighbor.combinedWithNext.not()
-
-            var wantCombine by remember { mutableStateOf(false) }
-
-            Row(
-                Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalAlignment   = Alignment.CenterVertically
-            ) {
-                Checkbox(
-                    checked = wantCombine,
-                    onCheckedChange = { wantCombine = it },
-                    enabled = canCombine
-                )
-                Text(
-                    text = if (canCombine)
-                        "Combinar con hueco ${slotWithProduct.slot.rowIndex}-${neighbor.colIndex}"
-                    else
-                        "No hay hueco contiguo disponible",
-                    style = MaterialTheme.typography.bodyMedium
-                )
-            }
-
-            Spacer(Modifier.height(8.dp))
-
-            Button(
-                onClick = {
-                    slotVm.combine(slotWithProduct.slot)
-                    onSave()
-                },
-                enabled = wantCombine,
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Text("Combinar huecos")
-            }
-        }
     }
 }
 

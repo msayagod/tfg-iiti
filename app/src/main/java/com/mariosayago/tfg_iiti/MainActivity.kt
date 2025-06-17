@@ -34,6 +34,7 @@ import androidx.compose.runtime.getValue
 import com.mariosayago.tfg_iiti.view.screens.ClosedIncidentListScreen
 import com.mariosayago.tfg_iiti.view.screens.IncidentFormScreen
 import com.mariosayago.tfg_iiti.view.screens.ProductFormScreen
+import com.mariosayago.tfg_iiti.view.screens.ScheduleFormScreen
 import com.mariosayago.tfg_iiti.view.screens.SlotFormScreen
 import com.mariosayago.tfg_iiti.view.screens.SlotListScreen
 
@@ -81,12 +82,14 @@ class MainActivity : ComponentActivity() {
 
                         composable("schedule_list") {
                             VisitScheduleScreen(
-                                onScheduleClick = { machineId: Long ->
-                                    // aquí la navegación o lo que sea
-                                    navController.navigate("machine_detail/$machineId")
-                                }
+                                onScheduleClick = { mid -> navController.navigate("machine_detail/$mid") },
+                                onNewSchedule  = { navController.navigate("schedule_form") }
                             )
                         }
+                        composable("schedule_form") {
+                            ScheduleFormScreen(onDone={ navController.popBackStack() })
+                        }
+
 
 
                         // 2. Mis máquinas
