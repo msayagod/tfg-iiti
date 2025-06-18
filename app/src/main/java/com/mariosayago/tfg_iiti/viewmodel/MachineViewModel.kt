@@ -64,19 +64,10 @@ class MachineViewModel @Inject constructor(
 
 
 
-    fun update(machine: Machine) {
+    fun updateMachine(machine: Machine, old: Machine, onDone: ()->Unit) {
         viewModelScope.launch {
-            // 1) recuperar antiguo para comparar dimensiones
-            val old = machineRepo.getMachineById(machine.id).first()
-            machineRepo.updateMachine(machine)
-            if (old.rows != machine.rows ||
-                old.columns != machine.columns
-            ) {
-                // 2) borrar viejos slots
-                slotRepo.deleteSlotsByMachine(machine.id)
-                // 3) sembrar nuevos
-                seedSlotsFor(machine.id, machine.rows, machine.columns)
-            }
+            machineRepo.updateMachineAndSlots(machine, old.rows, old.columns)
+            onDone()
         }
     }
 
@@ -103,7 +94,7 @@ class MachineViewModel @Inject constructor(
                     slotRepo.insertSlot(
                         Slot(
                             machineId = machineId,
-                            productId = productIds.random(),
+                            productId = null, //No asignar productos al crear slots
                             rowIndex = r,
                             colIndex = c,
                             maxCapacity = 0,

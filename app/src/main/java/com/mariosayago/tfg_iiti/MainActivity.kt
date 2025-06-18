@@ -33,6 +33,8 @@ import com.mariosayago.tfg_iiti.viewmodel.MachineViewModel
 import androidx.compose.runtime.getValue
 import com.mariosayago.tfg_iiti.view.screens.ClosedIncidentListScreen
 import com.mariosayago.tfg_iiti.view.screens.IncidentFormScreen
+import com.mariosayago.tfg_iiti.view.screens.OperationFormScreen
+import com.mariosayago.tfg_iiti.view.screens.OperationListScreen
 import com.mariosayago.tfg_iiti.view.screens.ProductFormScreen
 import com.mariosayago.tfg_iiti.view.screens.ScheduleFormScreen
 import com.mariosayago.tfg_iiti.view.screens.SlotFormScreen
@@ -161,9 +163,44 @@ class MainActivity : ComponentActivity() {
 
                                     onNewIncidentClick = { mid ->
                                         navController.navigate("incident_form/$mid")  // aquí navegas a crear incidencia
-                                    }
+                                    },
+                                    onOperateMachine   = { mid -> navController.navigate("operation_list/$mid") }
                                 )
                             }
+                        }
+
+                        // 2.4 Pantalla de Operar Máquina (lista de slots con botón “Operar”)
+                        composable(
+                            "operation_list/{machineId}",
+                            arguments = listOf(navArgument("machineId") {
+                                type = NavType.LongType
+                            })
+                        ) { back ->
+                            val machineId = back.arguments!!.getLong("machineId")
+                            OperationListScreen(
+                                machineId = machineId,
+                                onSlotClick = { slotId ->
+                                    navController.navigate("operation_form/$slotId")
+                                }
+                            )
+                        }
+
+
+                        // 3. Formulario de entrada de operación
+                        composable(
+                            "operation_form/{slotId}",
+                            arguments = listOf(navArgument("slotId") {
+                                type = NavType.LongType
+                            })
+                        ) { back ->
+                            val slotId = back.arguments!!.getLong("slotId")
+                            OperationFormScreen(
+                                slotId = slotId,
+                                onDone           = { navController.popBackStack() },
+                                onRegisterIncident = { mid ->
+                                    navController.navigate("incident_form/$mid")
+                                }
+                            )
                         }
 
                         // 3. Slots

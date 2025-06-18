@@ -32,15 +32,18 @@ import kotlin.math.min
 
 import androidx.compose.foundation.background
 
-import androidx.compose.foundation.lazy.grid.GridCells
+
 import androidx.compose.foundation.lazy.grid.GridItemSpan
-import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+
+import androidx.compose.foundation.verticalScroll
 
 
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.text.style.TextAlign
 
 import coil.compose.AsyncImage
+import kotlin.math.abs
 
 @OptIn(ExperimentalPerfettoTraceProcessorApi::class)
 @Composable
@@ -50,7 +53,8 @@ fun MachineDetailScreen(
     onDeleteClick: (Long) -> Unit,
     onEditSlotsClick: (Long) -> Unit,
     onNewIncidentClick: (Long) -> Unit,
-    slotVm: SlotViewModel = hiltViewModel(),          // ← SlotViewModel sigue aquí
+    onOperateMachine: (Long) -> Unit,
+    slotVm: SlotViewModel = hiltViewModel(),
     viewModel: MachineViewModel = hiltViewModel()
 ) {
     // 1) Cargamos la máquina con slots y productos
@@ -99,12 +103,13 @@ fun MachineDetailScreen(
             horizontalArrangement = Arrangement.spacedBy(8.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Button(onClick = { onEditClick(machineId) })   { Text("Editar") }
+            Button(onClick = { onEditClick(machineId) }) { Text("Editar") }
             Button(onClick = { onEditSlotsClick(machineId) }) { Text("Editar slots") }
             Button(onClick = { onNewIncidentClick(machineId) }) { Text("Nueva incidencia") }
+            Button(onClick = { onOperateMachine(machineId) }) { Text("Operar máquina") }
         }
 
-        // ─── 2. División ─────────────────────────────────────────
+
         HorizontalDivider(thickness = 1.dp)
 
         // ─── 3. Toggle grid / eliminar ──────────────────────────
@@ -123,10 +128,7 @@ fun MachineDetailScreen(
             }
             IconButton(onClick = { showGrid = !showGrid }) {
                 Icon(
-                    imageVector = if (showGrid)
-                        Icons.AutoMirrored.Filled.ViewList
-                    else
-                        Icons.Default.ViewModule,
+                    imageVector = if (showGrid) Icons.AutoMirrored.Filled.ViewList else Icons.Default.ViewModule,
                     contentDescription = if (showGrid) "Ver lista" else "Ver rejilla"
                 )
             }
@@ -192,18 +194,16 @@ fun MachineDetailScreen(
                     HorizontalDivider()
                 }
             }
-
         } else {
             // Rejilla con paginación si hay >6 columnas
-            val slots      = mwsp.slots
-            val totalCols  = mwsp.machine.columns
-            val pageSize   = if (totalCols > 6) (totalCols + 1) / 2 else totalCols
-            val pages      = (totalCols + pageSize - 1) / pageSize
-            var page by rememberSaveable { mutableIntStateOf(0) }
+            val slots = mwsp.slots
+            val totalCols = mwsp.machine.columns
+            val pageSize = if (totalCols > 6) (totalCols + 1) / 2 else totalCols
+            val pages = (totalCols + pageSize - 1) / pageSize
+            var page by rememberSaveable { mutableStateOf(0) }
 
             val startCol = page * pageSize + 1
-            val endCol   = min(totalCols, startCol + pageSize - 1)
-            val visibleSlots = slots.filter { it.slot.colIndex in startCol..endCol }
+            val endCol = min(totalCols, startCol + pageSize - 1)
 
             // Navegación página
             Row(
@@ -222,115 +222,190 @@ fun MachineDetailScreen(
 
             Spacer(Modifier.height(4.dp))
 
-            // Cabecera de columnas (igual a tu código)
 
-            // Cuerpo de la rejilla
-            LazyVerticalGrid(
-                columns = GridCells.Fixed(pageSize),
-                modifier = Modifier.fillMaxWidth(),
-                contentPadding = PaddingValues(4.dp),
-                horizontalArrangement = Arrangement.spacedBy(4.dp),
-                verticalArrangement = Arrangement.spacedBy(4.dp)
-            ) {
-                var i = 0
-                while (i < visibleSlots.size) {
-                    val sp = visibleSlots[i]
-                    val id = sp.slot.id
-                    val isSelected = selectedIds.contains(id)
-                    val borderModifier = if (isSelected) {
-                        Modifier.border(2.dp, primaryColor, RoundedCornerShape(4.dp))
-                    } else Modifier
-
-                    val span = if (sp.slot.combinedWithNext) 2 else 1
-                    item(span = { GridItemSpan(span) }) {
-                        Card(
-                            modifier = borderModifier
-                                .aspectRatio(span.toFloat())
-                                .clickable {
-                                    // Aquí sigue slotVm para combinar/descombinar
-                                },
-                            elevation = CardDefaults.cardElevation(4.dp)
-                        ) {
-                            Box {
-                                // Imagen de fondo
-                                sp.product?.imagePath?.let { url ->
-                                    AsyncImage(
-                                        model = url,
-                                        contentDescription = sp.product.name,
-                                        modifier = Modifier.fillMaxSize(),
-                                        contentScale = ContentScale.Crop
-                                    )
-                                }
-                                Box(
-                                    Modifier
-                                        .fillMaxSize()
-                                        .background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.3f))
-                                )
-                                Column(
-                                    Modifier
-                                        .fillMaxSize()
-                                        .padding(8.dp),
-                                    verticalArrangement = Arrangement.Center,
-                                    horizontalAlignment = Alignment.CenterHorizontally
-                                ) {
-                                    Text(
-                                        "${sp.slot.currentStock}",
-                                        style = MaterialTheme.typography.titleMedium,
-                                        color = MaterialTheme.colorScheme.surface
-                                    )
-                                    Text(
-                                        sp.product?.name ?: "—",
-                                        style = MaterialTheme.typography.bodySmall,
-                                        color = MaterialTheme.colorScheme.surface
-                                    )
-                                }
-                            }
-                        }
-                    }
-                    i += span
+            // ─── Cabecera de columnas ─────────────────────────────
+            Row(Modifier.fillMaxWidth()) {
+                Text(
+                    "", // espacio para la etiqueta de fila
+                    modifier = Modifier.width(24.dp)
+                )
+                for (col in startCol..endCol) {
+                    Text(
+                        col.toString(),
+                        modifier = Modifier
+                            .weight(1f)
+                            .padding(vertical = 4.dp),
+                        textAlign = TextAlign.Center
+                    )
                 }
             }
 
-            // ─── Botones Combinar / Descombinar ───────────────────────
-            val sorted = selectedIds
-                .mapNotNull { id -> slots.firstOrNull { it.slot.id == id }?.slot }
-                .sortedBy { it.colIndex }
-
-            val canCombine = sorted.size == 2 &&
-                    sorted[0].rowIndex == sorted[1].rowIndex &&
-                    sorted[1].colIndex - sorted[0].colIndex == 1 &&
-                    !sorted[0].combinedWithNext &&
-                    !sorted[1].combinedWithNext
-
-            val canUncombine = selectedIds.size == 1 &&
-                    slots.first { it.slot.id == selectedIds[0] }.slot.combinedWithNext
-
-            Row(
-                Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            // ─── Cuerpo de la rejilla con etiquetas de fila (falta la etiqueta de fila)
+            Column(
+                Modifier
+                    .fillMaxWidth()
+                    .heightIn(max = 400.dp) // ajusta si quieres scroll interno
+                    .verticalScroll(rememberScrollState()),
+                verticalArrangement = Arrangement.spacedBy(4.dp)
             ) {
-                Button(
-                    onClick = {
-                        slotVm.combine(sorted[0])         // ← slotVm sigue usándose
-                        selectedIds.clear()
-                    },
-                    enabled = canCombine,
-                    modifier = Modifier.weight(1f)
-                ) { Text("Combinar") }
-                Button(
-                    onClick = {
-                        slotVm.uncombine(
-                            slots.first { it.slot.id == selectedIds[0] }.slot
+                val rowsCount = mwsp.machine.rows
+                for (rowIdx in 1..rowsCount) {
+                    Row(
+                        Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(4.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        // Etiqueta de fila
+                        Text(
+                            rowIdx.toString(),
+                            modifier = Modifier
+                                .width(24.dp)
+                                .padding(vertical = 8.dp),
+                            textAlign = TextAlign.Center
                         )
-                        selectedIds.clear()
-                    },
-                    enabled = canUncombine,
-                    modifier = Modifier.weight(1f)
-                ) { Text("Descombinar") }
+                        // Celdas de esa fila
+                        for (col in startCol..endCol) {
+                            val sp = slots.firstOrNull {
+                                it.slot.rowIndex == rowIdx && it.slot.colIndex == col
+                            }
+                            if (sp != null) {
+                                // span si combinado
+                                val span = if (sp.slot.combinedWithNext) 2 else 1
+                                // border si seleccionado
+                                val isSelected = selectedIds.contains(sp.slot.id)
+                                val border = if (isSelected) {
+                                    Modifier.border(
+                                        2.dp,
+                                        primaryColor,
+                                        RoundedCornerShape(4.dp)
+                                    )
+                                } else Modifier
+
+                                val spanCount = if (sp.slot.combinedWithNext) 2 else 1
+
+                                Card(
+                                    modifier = border
+                                        .weight(span.toFloat())
+                                        .aspectRatio(span.toFloat())
+                                        .clickable {
+                                            val id = sp.slot.id
+                                            when {
+                                                // 1) Si ya está seleccionado, lo quitamos
+                                                id in selectedIds -> selectedIds.remove(id)
+                                                // 2) Si no hay ninguno seleccionado, lo añadimos
+                                                selectedIds.isEmpty() -> selectedIds.add(id)
+                                                // 3) Si ya hay uno, permitimos el segundo solo si está contiguo en la misma fila
+                                                selectedIds.size == 1 -> {
+                                                    val firstSlot = slots.first { it.slot.id == selectedIds[0] }.slot
+                                                    if (
+                                                        firstSlot.rowIndex == sp.slot.rowIndex &&
+                                                        abs(firstSlot.colIndex - sp.slot.colIndex) == 1 &&
+                                                        !firstSlot.combinedWithNext &&
+                                                        !sp.slot.combinedWithNext
+                                                    ) {
+                                                        selectedIds.add(id)
+                                                    }
+                                                }
+                                                // 4) Si ya hay dos, no hacemos nada
+                                                else -> { /* nada */ }
+                                            }
+                                        },
+                                    elevation = CardDefaults.cardElevation(4.dp)
+                                ) {
+                                    Box {
+                                        // Imagen de fondo
+                                        sp.product?.imagePath.let { url ->
+                                            AsyncImage(
+                                                model = url,
+                                                contentDescription = sp.product?.name,
+                                                modifier = Modifier.fillMaxSize(),
+                                                contentScale = ContentScale.Crop
+                                            )
+                                        }
+                                        Box(
+                                            Modifier
+                                                .fillMaxSize()
+                                                .background(
+                                                    MaterialTheme.colorScheme.onSurface.copy(
+                                                        alpha = 0.3f
+                                                    )
+                                                )
+                                        )
+                                        Column(
+                                            Modifier
+                                                .fillMaxSize()
+                                                .padding(8.dp),
+                                            verticalArrangement = Arrangement.Center,
+                                            horizontalAlignment = Alignment.CenterHorizontally
+                                        ) {
+                                            Text(
+                                                "${sp.slot.currentStock}",
+                                                style = MaterialTheme.typography.titleMedium,
+                                                color = MaterialTheme.colorScheme.surface
+                                            )
+                                            Text(
+                                                sp.product?.name ?: "—",
+                                                style = MaterialTheme.typography.bodySmall,
+                                                color = MaterialTheme.colorScheme.surface
+                                            )
+                                        }
+                                    }
+                                }
+                            } else {
+                                Spacer(
+                                    Modifier
+                                        .weight(1f)
+                                        .aspectRatio(1f)
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+
+                    // ─── Botones Combinar / Descombinar ───────────────────────
+                    val sorted = selectedIds
+                        .mapNotNull { id -> slots.firstOrNull { it.slot.id == id }?.slot }
+                        .sortedBy { it.colIndex }
+
+                    val canCombine = sorted.size == 2 &&
+                            sorted[0].rowIndex == sorted[1].rowIndex &&
+                            sorted[1].colIndex - sorted[0].colIndex == 1 &&
+                            !sorted[0].combinedWithNext &&
+                            !sorted[1].combinedWithNext
+
+                    val canUncombine = selectedIds.size == 1 &&
+                            slots.first { it.slot.id == selectedIds[0] }.slot.combinedWithNext
+
+                    Row(
+                        Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Button(
+                            onClick = {
+                                slotVm.combine(sorted[0])         // ← slotVm sigue usándose
+                                selectedIds.clear()
+                            },
+                            enabled = canCombine,
+                            modifier = Modifier.weight(1f)
+                        ) { Text("Combinar") }
+                        Button(
+                            onClick = {
+                                slotVm.uncombine(
+                                    slots.first { it.slot.id == selectedIds[0] }.slot
+                                )
+                                selectedIds.clear()
+                            },
+                            enabled = canUncombine,
+                            modifier = Modifier.weight(1f)
+                        ) { Text("Descombinar") }
+                    }
+                }
             }
         }
-    }
-}
+
+
+
 
 
 

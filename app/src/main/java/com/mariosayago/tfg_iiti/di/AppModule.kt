@@ -47,8 +47,8 @@ object AppModule {
 
     /*** REPOSITORIES ***/
     @Provides @Singleton
-    fun provideMachineRepository(dao: MachineDao): MachineRepository =
-        MachineRepository(dao)
+    fun provideMachineRepository(dao: MachineDao, dao2: SlotDao): MachineRepository =
+        MachineRepository(dao, dao2)
 
     @Provides @Singleton
     fun provideSlotRepository(dao: SlotDao): SlotRepository =

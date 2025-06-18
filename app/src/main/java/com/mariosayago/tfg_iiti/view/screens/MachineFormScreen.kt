@@ -144,6 +144,7 @@ fun MachineFormScreen(
             )
         }
 
+
         // Botón
         Button(
             onClick = {
@@ -157,13 +158,16 @@ fun MachineFormScreen(
                     columns  = c
                 )
                 if (machineId == null) {
-                    // Aquí usamos tu insertAndSeed con callback
+                    // Aquí usamos  insertAndSeed con callback
                     viewModel.insertAndSeed(machine) {
                         onSave()
                     }
                 } else {
-                    viewModel.update(machine)
-                    onSave()
+                    existingMachine?.let { old -> // Si no es null, actualizamos
+                        viewModel.updateMachine(machine, old) {
+                            onSave()
+                        }
+                    }
                 }
             },
             enabled = formValid,

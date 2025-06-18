@@ -28,6 +28,9 @@ class SlotViewModel @Inject constructor(
         repository.getSlotsWithProductByMachine(machineId)
             .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
+    fun getSlotsWithProductByMachine(machineId: Long): Flow<List<SlotWithProduct>> =
+        repository.getSlotsWithProductByMachine(machineId)
+
     fun insert(slot: Slot) {
         viewModelScope.launch { repository.insertSlot(slot) }
     }
