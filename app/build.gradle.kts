@@ -4,7 +4,7 @@ plugins {
     alias(libs.plugins.compose.compiler)
     alias(libs.plugins.hilt)
     alias(libs.plugins.ksp)
-    id("kotlin-kapt")
+   // id("kotlin-kapt")
 }
 
 android {
@@ -67,9 +67,11 @@ dependencies {
     implementation(libs.androidx.room.runtime)
     implementation(libs.androidx.room.ktx)
     ksp(libs.androidx.room.compiler)
+    //kapt(libs.androidx.room.compiler)
     // Hilt base (todavia con kapt)
     implementation(libs.dagger.hilt)
-    kapt(libs.dagger.hilt.compiler)
+    ksp(libs.dagger.hilt.compiler)
+    //kapt(libs.dagger.hilt.compiler)
     // Hilt para ViewModel + Compose (este si compatible con ksp)
     implementation(libs.androidx.hilt.navigation.compose)
     ksp(libs.androidx.hilt.compiler)

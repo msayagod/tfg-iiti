@@ -39,6 +39,10 @@ class SlotViewModel @Inject constructor(
         viewModelScope.launch { repository.updateSlot(slot) }
     }
 
+    fun updateCurrentStock(slotId: Long, stock: Int) = viewModelScope.launch {
+        repository.updateCurrentStock(slotId, stock)
+    }
+
     fun delete(slot: Slot) {
         viewModelScope.launch { repository.deleteSlot(slot) }
     }

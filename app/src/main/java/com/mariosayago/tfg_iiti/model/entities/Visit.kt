@@ -4,9 +4,9 @@ import androidx.room.Entity
 import androidx.room.PrimaryKey
 
 @Entity(tableName = "visits")
-data class Visit(
+data class Visit( //MachineOperation
     @PrimaryKey(autoGenerate = true) val id: Long = 0L,
     val machineId: Long,
     val date: String, // "yyyy-mm-ss"
-    val scheduleId: Long? = null // Si proviene de una planificación
+    val actualCash: Double //Importe recogido de la maquina
 )

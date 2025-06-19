@@ -32,9 +32,6 @@ import kotlin.math.min
 
 import androidx.compose.foundation.background
 
-
-import androidx.compose.foundation.lazy.grid.GridItemSpan
-
 import androidx.compose.foundation.verticalScroll
 
 
@@ -281,7 +278,6 @@ fun MachineDetailScreen(
                                     )
                                 } else Modifier
 
-                                val spanCount = if (sp.slot.combinedWithNext) 2 else 1
 
                                 Card(
                                     modifier = border
@@ -351,12 +347,6 @@ fun MachineDetailScreen(
                                         }
                                     }
                                 }
-                            } else {
-                                Spacer(
-                                    Modifier
-                                        .weight(1f)
-                                        .aspectRatio(1f)
-                                )
                             }
                         }
                     }

@@ -2,6 +2,8 @@ package com.mariosayago.tfg_iiti.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.room.Insert
+import androidx.room.OnConflictStrategy.Companion.REPLACE
 import com.mariosayago.tfg_iiti.model.entities.Operation
 import com.mariosayago.tfg_iiti.model.relations.OperationWithSlot
 import com.mariosayago.tfg_iiti.data.repository.OperationRepository
@@ -21,6 +23,13 @@ class OperationViewModel @Inject constructor(
     fun getOperationsWithSlotByDate(date: String): Flow<List<OperationWithSlot>> =
         repository.getOperationsWithSlotByDate(date)
 
+    fun todayOpsForSlot(slotId: Long, hoy: String) =
+        repository.getTodayOperationsForSlot(slotId, hoy)
+
+    fun todayOpsWithSlotByMachine(machineId: Long, hoy: String) =
+        repository.getTodayOperationsWithSlotByMachine(machineId, hoy)
+
+    @Insert(onConflict = REPLACE) // Si la operación ya existe, la reemplaza
     fun insert(operation: Operation) {
         viewModelScope.launch { repository.insertOperation(operation) }
     }

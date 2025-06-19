@@ -85,13 +85,12 @@ class MainActivity : ComponentActivity() {
                         composable("schedule_list") {
                             VisitScheduleScreen(
                                 onScheduleClick = { mid -> navController.navigate("machine_detail/$mid") },
-                                onNewSchedule  = { navController.navigate("schedule_form") }
+                                onNewSchedule = { navController.navigate("schedule_form") }
                             )
                         }
                         composable("schedule_form") {
-                            ScheduleFormScreen(onDone={ navController.popBackStack() })
+                            ScheduleFormScreen(onDone = { navController.popBackStack() })
                         }
-
 
 
                         // 2. Mis máquinas
@@ -164,7 +163,7 @@ class MainActivity : ComponentActivity() {
                                     onNewIncidentClick = { mid ->
                                         navController.navigate("incident_form/$mid")  // aquí navegas a crear incidencia
                                     },
-                                    onOperateMachine   = { mid -> navController.navigate("operation_list/$mid") }
+                                    onOperateMachine = { mid -> navController.navigate("operation_list/$mid") }
                                 )
                             }
                         }
@@ -179,7 +178,7 @@ class MainActivity : ComponentActivity() {
                             val machineId = back.arguments!!.getLong("machineId")
                             OperationListScreen(
                                 machineId = machineId,
-                                onSlotClick = { slotId ->
+                                onSlotClick = {slotId ->
                                     navController.navigate("operation_form/$slotId")
                                 }
                             )
@@ -189,17 +188,15 @@ class MainActivity : ComponentActivity() {
                         // 3. Formulario de entrada de operación
                         composable(
                             "operation_form/{slotId}",
-                            arguments = listOf(navArgument("slotId") {
-                                type = NavType.LongType
-                            })
+                            arguments = listOf(
+                                navArgument("slotId") {
+                                    type = NavType.LongType
+                                })
                         ) { back ->
                             val slotId = back.arguments!!.getLong("slotId")
                             OperationFormScreen(
                                 slotId = slotId,
-                                onDone           = { navController.popBackStack() },
-                                onRegisterIncident = { mid ->
-                                    navController.navigate("incident_form/$mid")
-                                }
+                                onDone = { navController.popBackStack() },
                             )
                         }
 

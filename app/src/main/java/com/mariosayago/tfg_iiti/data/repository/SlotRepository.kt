@@ -28,6 +28,10 @@ class SlotRepository(private val slotDao: SlotDao) {
     suspend fun deleteSlotsByMachine(machineId: Long) =
         slotDao.deleteSlotsByMachine(machineId)
 
+    suspend fun updateCurrentStock(slotId: Long, stock: Int) =
+        slotDao.updateCurrentStock(slotId, stock)
+
+
 
     // Combinar huecos
     suspend fun combineSlots(

@@ -74,6 +74,9 @@ fun SlotFormScreen(
     var stockText by remember {
         mutableStateOf(slotWithProduct.slot.currentStock.toString())
     }
+    var capacityText by remember {
+        mutableStateOf(slotWithProduct.slot.maxCapacity.toString())
+    }
 
     // 4) Nombre visible
     val selectedName = products.find { it.id == selectedPid }?.name ?: "—"
@@ -116,6 +119,7 @@ fun SlotFormScreen(
 
         Spacer(modifier = Modifier.height(16.dp))
 
+        //Stock actual
         OutlinedTextField(
             value = stockText,
             onValueChange = { stockText = it.filter(Char::isDigit) },
@@ -126,24 +130,35 @@ fun SlotFormScreen(
 
         Spacer(modifier = Modifier.height(24.dp))
 
-        // Botón Guardar cambios de producto/stock
+        // Capacidad máxima
+        OutlinedTextField(
+            value = capacityText,
+            onValueChange = { capacityText = it.filter(Char::isDigit) },
+            label = { Text("Capacidad máxima") },
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+            modifier = Modifier.fillMaxWidth()
+        )
+
+        // Botón Guardar
         Button(
             onClick = {
                 slotVm.update(
                     slotWithProduct.slot.copy(
                         productId = selectedPid,
                         currentStock = stockText.toIntOrNull()
-                            ?: slotWithProduct.slot.currentStock
+                            ?: slotWithProduct.slot.currentStock,
+                        maxCapacity = capacityText.toIntOrNull()
+                            ?: slotWithProduct.slot.maxCapacity
                     )
                 )
                 onSave()
             },
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxWidth(),
+            enabled = stockText.all(Char::isDigit) && capacityText.all(Char::isDigit)
         ) {
             Text("Guardar")
         }
 
-        Spacer(Modifier.height(16.dp))
 
     }
 }

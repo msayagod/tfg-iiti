@@ -11,5 +11,4 @@ data class Operation(
     val observedStock: Int,
     val replenishedUnits: Int,
     val estimatedRevenue: Double,
-    val actualCash: Double?
 )

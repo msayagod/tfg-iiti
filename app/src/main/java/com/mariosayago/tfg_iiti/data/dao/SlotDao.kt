@@ -30,11 +30,15 @@ interface SlotDao {
     @Query("""
     SELECT * FROM slots
      WHERE machineId = :machineId
-       AND rowIndex = :row
-       AND colIndex = :nextColumn
+       AND rowIndex = :rowIndex
+       AND colIndex = :colIndex
      LIMIT 1
   """)
-    suspend fun getSlotAt(machineId: Long, row: Int, nextColumn: Int): Slot?
+    suspend fun getSlotAt(machineId: Long, rowIndex: Int, colIndex: Int): Slot?
+
+    // Actualiza el currentStock del slot
+    @Query("UPDATE slots SET currentStock = :stock WHERE id = :slotId")
+    suspend fun updateCurrentStock(slotId: Long, stock: Int)
 
     @Query("DELETE FROM slots WHERE machineId = :machineId")
     suspend fun deleteSlotsByMachine(machineId: Long)

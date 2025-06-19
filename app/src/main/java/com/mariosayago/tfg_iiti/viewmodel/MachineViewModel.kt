@@ -52,21 +52,27 @@ class MachineViewModel @Inject constructor(
     // Funcion insert que inserta una máquina y sus slots
     fun insertAndSeed(
         machine: Machine,
+        defaultSlotCapacity: Int,
         onComplete: () -> Unit
     ) {
         viewModelScope.launch {
             val newId = machineRepo.insertMachine(machine)
-            seedSlotsFor(newId, machine.rows, machine.columns)
+            seedSlotsFor(newId, machine.rows, machine.columns, defaultSlotCapacity)
             // cuando termina la siembra, llamamos al callback
             onComplete()
         }
     }
 
 
-
-    fun updateMachine(machine: Machine, old: Machine, onDone: ()->Unit) {
+    fun updateMachine(machine: Machine, defaultSlotCapacity: Int, old: Machine, onDone: ()->Unit) {
         viewModelScope.launch {
-            machineRepo.updateMachineAndSlots(machine, old.rows, old.columns)
+            machineRepo.updateMachine(machine)
+            if (old.rows != machine.rows ||
+                old.columns != machine.columns
+            ) {
+                slotRepo.deleteSlotsByMachine(machine.id)
+                seedSlotsFor(machine.id, machine.rows, machine.columns, defaultSlotCapacity)
+            }
             onDone()
         }
     }
@@ -84,11 +90,11 @@ class MachineViewModel @Inject constructor(
     private suspend fun seedSlotsFor(
         machineId: Long,
         rows: Int,
-        columns: Int
+        columns: Int,
+        slotCapacity: Int
     ) {
         try {
             val products = productRepo.getAllProducts().first()
-            val productIds = products.map { it.id }
             for (r in 1..rows) {
                 for (c in 1..columns) {
                     slotRepo.insertSlot(
@@ -97,7 +103,7 @@ class MachineViewModel @Inject constructor(
                             productId = null, //No asignar productos al crear slots
                             rowIndex = r,
                             colIndex = c,
-                            maxCapacity = 0,
+                            maxCapacity = slotCapacity,
                             currentStock = 0
                         )
                     )

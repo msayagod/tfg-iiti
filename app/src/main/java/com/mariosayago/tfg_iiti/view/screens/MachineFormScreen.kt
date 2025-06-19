@@ -36,6 +36,7 @@ fun MachineFormScreen(
     var location by remember { mutableStateOf("") }
     var rows by remember { mutableStateOf("") }
     var columns by remember { mutableStateOf("") }
+    var defaultSlotCap by remember { mutableStateOf("") }
 
     // Rango válido para filas/columnas
     val minSize = 1
@@ -46,12 +47,14 @@ fun MachineFormScreen(
     val colsVal  = columns.toIntOrNull() ?: -1
     val rowsValid = rowsVal in minSize..maxSize
     val colsValid = colsVal in minSize..maxSize
+    val capVal   = defaultSlotCap.toIntOrNull() ?: -1
 
     // Form válido: textos no vacíos y números en rango
     val formValid = name.isNotBlank()
             && location.isNotBlank()
             && rowsValid
             && colsValid
+            && capVal > 0
 
     // 3) Cuando existingMachine cambie de null → non-null, rellenamos los campos
     LaunchedEffect(existingMachine) {
@@ -60,6 +63,7 @@ fun MachineFormScreen(
             location = m.location
             rows     = m.rows.toString()
             columns  = m.columns.toString()
+            defaultSlotCap  = m.defaultSlotCapacity.toString()
         }
     }
 
@@ -144,27 +148,39 @@ fun MachineFormScreen(
             )
         }
 
+        // **Capacidad por defecto de cada slot**
+        OutlinedTextField(
+            value = defaultSlotCap,
+            onValueChange = { defaultSlotCap = it.filter(Char::isDigit) },
+            label = { Text("Capacidad slot (por defecto)") },
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+            modifier = Modifier.fillMaxWidth()
+        )
+
+
 
         // Botón
         Button(
             onClick = {
                 val r = rowsVal
                 val c = colsVal
+                val defaultSlotCapacity = capVal
                 val machine = Machine(
                     id       = machineId ?: 0L,
                     name     = name,
                     location = location,
                     rows     = r,
-                    columns  = c
+                    columns  = c,
+                    defaultSlotCapacity = defaultSlotCapacity
                 )
                 if (machineId == null) {
                     // Aquí usamos  insertAndSeed con callback
-                    viewModel.insertAndSeed(machine) {
+                    viewModel.insertAndSeed(machine, defaultSlotCapacity) {
                         onSave()
                     }
                 } else {
                     existingMachine?.let { old -> // Si no es null, actualizamos
-                        viewModel.updateMachine(machine, old) {
+                        viewModel.updateMachine(machine, capVal, old) {
                             onSave()
                         }
                     }
