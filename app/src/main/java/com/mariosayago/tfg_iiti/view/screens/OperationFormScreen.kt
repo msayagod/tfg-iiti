@@ -19,7 +19,6 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.mariosayago.tfg_iiti.model.entities.Operation
 import com.mariosayago.tfg_iiti.viewmodel.OperationViewModel
 import com.mariosayago.tfg_iiti.viewmodel.SlotViewModel
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import java.time.LocalDate
 
@@ -45,11 +44,29 @@ fun OperationFormScreen(
     }
     val (slot, prod) = slotWithProd!!
 
-    // 2) Estados locales
-    var observedStock by rememberSaveable { mutableIntStateOf(slot.currentStock) }
-    var modeAuto by rememberSaveable { mutableStateOf(true) }
-    var manualUnits by rememberSaveable { mutableIntStateOf(0) }
+
+    // Leer operacion existente de hoy si ya hay
+    // 1) Cadena de hoy en ISO
     var dateToday = LocalDate.now()
+    val todayStr = dateToday.toString()
+    // 2) Busca si ya existe una operación hoy para este slot
+    val existingOps by opVm
+        .todayOpsForSlot(slot.id, todayStr)
+        .collectAsState(initial = emptyList())
+    val existingOp = existingOps.firstOrNull()
+
+
+    // 3) Estados locales
+    //CurrentStock si el slot no está operado, sino el stock de la operación
+    var observedStock by rememberSaveable(existingOp?.id ?: 0L) {
+        mutableIntStateOf(existingOp?.observedStock ?: slot.currentStock)
+    }
+    var modeAuto by rememberSaveable { mutableStateOf(true) }
+    //ReplenishedUnits si el slot esta operado, sino 0 (por defecto)
+    var manualUnits by rememberSaveable(existingOp?.id ?: 0L) {
+        mutableIntStateOf(existingOp?.replenishedUnits ?: 0)
+    }
+
 
     val maxReplenish = slot.maxCapacity - observedStock
     val unitsToReplenish = if (modeAuto) maxReplenish else manualUnits
@@ -70,25 +87,30 @@ fun OperationFormScreen(
 
         // ── STOCK OBSERVADO ─────────────────────────────────────
         Text("Stock observado:", style = MaterialTheme.typography.bodyMedium)
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            IconButton(onClick = { observedStock = (observedStock - 1).coerceAtLeast(0) }) {
-                Icon(Icons.Default.Remove, contentDescription = "Menos")
+        if (existingOp == null) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                IconButton(onClick = { observedStock = (observedStock - 1).coerceAtLeast(0) }) {
+                    Icon(Icons.Default.Remove, contentDescription = "Menos")
+                }
+                Text(
+                    text = "$observedStock",
+                    modifier = Modifier.width(48.dp),
+                    style = MaterialTheme.typography.titleMedium,
+                    textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                )
+
+                Spacer(Modifier.width(16.dp))
+                OutlinedButton(onClick = { observedStock = 0 }) {
+                    Text("Vaciar")
+                }
             }
+        } else {
+            // operación existente: mostramos el stock fijo
             Text(
                 text = "$observedStock",
-                modifier = Modifier.width(48.dp),
                 style = MaterialTheme.typography.titleMedium,
-                textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                modifier = Modifier.padding(8.dp)
             )
-            IconButton(onClick = {
-                observedStock = (observedStock + 1).coerceAtMost(slot.maxCapacity)
-            }) {
-                Icon(Icons.Default.Add, contentDescription = "Más")
-            }
-            Spacer(Modifier.width(16.dp))
-            OutlinedButton(onClick = { observedStock = 0 }) {
-                Text("Vaciar")
-            }
         }
 
         // ── MODO REPOSICIÓN ────────────────────────────────────
@@ -140,26 +162,18 @@ fun OperationFormScreen(
         Button(
             onClick = {
                 scope.launch {
-                    // 1) Cadena de hoy en ISO
-                    val todayStr = dateToday.toString()
 
-                    // 2) Calcula y aplica el nuevo stock en el Slot
+                    // 2) Calcula el nuevo stock y lo actualiza
                     val newStock = observedStock + unitsToReplenish
-                    val updatedSlot = slot.copy(currentStock = newStock)
-                    slotVm.update(updatedSlot)
+                    slotVm.update(slot.copy(currentStock = newStock))
 
-                    // 3) Busca si ya existe una operación hoy para este slot
-                    val opsToday: List<Operation> = opVm
-                        .todayOpsForSlot(slot.id, todayStr)
-                        .first()                 // import kotlinx.coroutines.flow.first
-                    val existingOp = opsToday.firstOrNull()
 
-                    // 4) Crea la Operation con id = existingOp?.id ?: 0L
+                    // 3) Crea la Operation con id = existingOp?.id ?: 0L
                     val op = Operation(
-                        id               = existingOp?.id ?: 0L,
-                        slotId           = slot.id,
-                        date             = todayStr,
-                        observedStock    = observedStock,
+                        id = existingOp?.id ?: 0L, // id de la op si ya existe para el dia de hoy
+                        slotId = slot.id,
+                        date = todayStr,
+                        observedStock = observedStock,
                         replenishedUnits = unitsToReplenish,
                         estimatedRevenue = estimatedRevenue
                     )
@@ -174,7 +188,7 @@ fun OperationFormScreen(
             enabled = observedStock in 0..slot.maxCapacity
                     && unitsToReplenish in 0..maxReplenish
         ) {
-            Text("Guardar")
+            Text(if (existingOp == null) "Guardar" else "Actualizar")
         }
     }
 }

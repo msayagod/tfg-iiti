@@ -78,6 +78,18 @@ fun SlotFormScreen(
         mutableStateOf(slotWithProduct.slot.maxCapacity.toString())
     }
 
+    // --- Validaciones ---
+    // Parseos a Int y rangos
+    val capacityVal = capacityText.toIntOrNull() ?: 0
+    val stockVal = stockText.toIntOrNull() ?: 0
+
+    // Comprueba que capacity está entre 1 y 100
+    val isCapacityValid = capacityVal in 1..100
+    // Comprueba que stock no supere capacity y sea ≥ 0
+    val isStockValid = stockVal in 0..capacityVal
+
+    val isFormValid = isCapacityValid && isStockValid
+
     // 4) Nombre visible
     val selectedName = products.find { it.id == selectedPid }?.name ?: "—"
 
@@ -119,25 +131,48 @@ fun SlotFormScreen(
 
         Spacer(modifier = Modifier.height(16.dp))
 
+
+        // Capacidad máxima
+        OutlinedTextField(
+            value = capacityText,
+            //Recordatorio. it es como si el lambda por defecto es it-> (omitido)
+            onValueChange = { capacityText = it.filter(Char::isDigit) },
+            label = { Text("Capacidad máxima") },
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+            modifier = Modifier.fillMaxWidth(),
+            isError = !isCapacityValid && capacityText.isNotBlank()
+        )
+
+        if (!isCapacityValid && capacityText.isNotBlank()) {
+            Text(
+                "Debe ser un número entre 1 y 100",
+                color = MaterialTheme.colorScheme.error,
+                style = MaterialTheme.typography.bodySmall
+            )
+        }
+
+        Spacer(Modifier.height(24.dp))
+
         //Stock actual
         OutlinedTextField(
             value = stockText,
             onValueChange = { stockText = it.filter(Char::isDigit) },
             label = { Text("Stock actual") },
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxWidth(),
+            isError = !isStockValid && stockText.isNotBlank()
         )
+
+        if (!isStockValid && stockText.isNotBlank()) {
+            Text(
+                "Debe ser un número entre 0 y $capacityVal",
+                color = MaterialTheme.colorScheme.error,
+                style = MaterialTheme.typography.bodySmall
+            )
+        }
 
         Spacer(modifier = Modifier.height(24.dp))
 
-        // Capacidad máxima
-        OutlinedTextField(
-            value = capacityText,
-            onValueChange = { capacityText = it.filter(Char::isDigit) },
-            label = { Text("Capacidad máxima") },
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-            modifier = Modifier.fillMaxWidth()
-        )
 
         // Botón Guardar
         Button(
@@ -145,16 +180,14 @@ fun SlotFormScreen(
                 slotVm.update(
                     slotWithProduct.slot.copy(
                         productId = selectedPid,
-                        currentStock = stockText.toIntOrNull()
-                            ?: slotWithProduct.slot.currentStock,
-                        maxCapacity = capacityText.toIntOrNull()
-                            ?: slotWithProduct.slot.maxCapacity
+                        currentStock = stockVal,
+                        maxCapacity = capacityVal
                     )
                 )
                 onSave()
             },
             modifier = Modifier.fillMaxWidth(),
-            enabled = stockText.all(Char::isDigit) && capacityText.all(Char::isDigit)
+            enabled = isFormValid
         ) {
             Text("Guardar")
         }

@@ -29,7 +29,7 @@ class OperationViewModel @Inject constructor(
     fun todayOpsWithSlotByMachine(machineId: Long, hoy: String) =
         repository.getTodayOperationsWithSlotByMachine(machineId, hoy)
 
-    @Insert(onConflict = REPLACE) // Si la operación ya existe, la reemplaza
+    @Insert(onConflict = REPLACE) // Si la operación ya existe, la reemplaza (sirve como update)
     fun insert(operation: Operation) {
         viewModelScope.launch { repository.insertOperation(operation) }
     }

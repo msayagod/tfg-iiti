@@ -102,7 +102,7 @@ fun OperationListScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .background(if (isDone) Color.LightGray else Color.Transparent)
-                        .clickable(enabled = !isDone) { onSlotClick(sp.slot.id) }
+                        .clickable(enabled = !isDone || showOperated) { onSlotClick(sp.slot.id) }
                         .padding(8.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
