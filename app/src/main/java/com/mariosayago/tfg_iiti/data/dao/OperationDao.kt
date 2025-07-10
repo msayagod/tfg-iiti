@@ -24,23 +24,27 @@ interface OperationDao {
     fun getOperationsForSlot(slotId: Long): Flow<List<Operation>>
 
     // operaciones de un slot en la fecha dada
-    @Query("""
+    @Query(
+        """
   SELECT * 
     FROM operations
    WHERE slotId = :slotId
      AND date LIKE :hoy || '%'
    ORDER BY date DESC
-""")
+"""
+    )
     fun getTodayOperationsForSlot(slotId: Long, hoy: String): Flow<List<Operation>>
 
     @Transaction
-    @Query("""
+    @Query(
+        """
     SELECT o.* 
       FROM operations o
       JOIN slots s    ON s.id        = o.slotId
      WHERE s.machineId = :machineId
        AND o.date LIKE :hoy || '%'
-  """)
+  """
+    )
     fun getTodayOperationsWithSlotByMachine(
         machineId: Long,
         hoy: String
@@ -51,5 +55,30 @@ interface OperationDao {
     @Query("SELECT * FROM operations WHERE date = :date")
     fun getOperationsWithSlotByDate(date: String): Flow<List<OperationWithSlot>>
 
+    // --- Para informes ---
+    @Transaction
+    @Query(
+        """
+    SELECT o.* FROM operations o
+      JOIN slots s ON s.id = o.slotId
+     WHERE s.machineId = :machineId
+       AND o.date LIKE :day || '%'
+  """
+    )
+    fun getDailyOperations(machineId: Long, day: String): Flow<List<OperationWithSlot>>
 
+    @Transaction
+    @Query("""
+    SELECT * 
+      FROM operations o
+      JOIN slots s ON s.id = o.slotId
+     WHERE s.machineId = :machineId
+       AND o.date BETWEEN :fromDate AND :toDate
+     ORDER BY o.date
+  """)
+    fun getOperationsInRange(
+        machineId: Long,
+        fromDate: String,
+        toDate: String
+    ): Flow<List<OperationWithSlot>>
 }

@@ -24,4 +24,6 @@ class OperationRepository(private val operationDao: OperationDao) {
         operationDao.insertOperation(operation)
 
     suspend fun updateOperation(op: Operation) = operationDao.updateOperation(op)
+
+
 }

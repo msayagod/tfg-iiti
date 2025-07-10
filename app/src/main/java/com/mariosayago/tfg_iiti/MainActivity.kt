@@ -36,6 +36,8 @@ import com.mariosayago.tfg_iiti.view.screens.IncidentFormScreen
 import com.mariosayago.tfg_iiti.view.screens.OperationFormScreen
 import com.mariosayago.tfg_iiti.view.screens.OperationListScreen
 import com.mariosayago.tfg_iiti.view.screens.ProductFormScreen
+import com.mariosayago.tfg_iiti.view.screens.ReportDetailScreen
+import com.mariosayago.tfg_iiti.view.screens.ReportFilterScreen
 import com.mariosayago.tfg_iiti.view.screens.ScheduleFormScreen
 import com.mariosayago.tfg_iiti.view.screens.SlotFormScreen
 import com.mariosayago.tfg_iiti.view.screens.SlotListScreen
@@ -70,6 +72,11 @@ class MainActivity : ComponentActivity() {
                                 TextButton(onClick = { navController.navigate("incident_list") }) {
                                     Text("Incidencias")
                                 }
+
+                                TextButton(onClick = { navController.navigate("reports_list") }) {
+                                    Text("Informes")
+                                }
+
                             }
                         )
                     }
@@ -178,7 +185,7 @@ class MainActivity : ComponentActivity() {
                             val machineId = back.arguments!!.getLong("machineId")
                             OperationListScreen(
                                 machineId = machineId,
-                                onSlotClick = {slotId ->
+                                onSlotClick = { slotId ->
                                     navController.navigate("operation_form/$slotId")
                                 }
                             )
@@ -306,6 +313,33 @@ class MainActivity : ComponentActivity() {
                             IncidentFormScreen(
                                 machineId = mId,
                                 onSave = { navController.popBackStack() }
+                            )
+                        }
+
+                        // --- Reportes ---
+                        // 1) Lista de filtros
+                        composable("reports_list") {
+                            ReportFilterScreen(
+                                onGenerate = { mId, from, to ->
+                                    navController.navigate("report_detail/$mId/$from/$to")
+                                }
+                            )
+                        }
+
+                        // 2) Pantalla de detalle
+                        composable(
+                            route = "report_detail/{machineId}/{fromDate}/{toDate}",
+                            arguments = listOf(
+                                navArgument("machineId") { type = NavType.LongType },
+                                navArgument("fromDate") { type = NavType.StringType },
+                                navArgument("toDate") { type = NavType.StringType }
+                            )
+                        ) { back ->
+                            ReportDetailScreen(
+                                machineId = back.arguments!!.getLong("machineId"),
+                                fromDate = back.arguments!!.getString("fromDate")!!,
+                                toDate = back.arguments!!.getString("toDate")!!,
+                                onExportPdf = { /* invocar función de PDF */ }
                             )
                         }
 

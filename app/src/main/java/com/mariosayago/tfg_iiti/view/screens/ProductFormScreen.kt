@@ -28,7 +28,7 @@ import com.mariosayago.tfg_iiti.model.entities.Product
 import com.mariosayago.tfg_iiti.viewmodel.ProductViewModel
 import coil.compose.AsyncImage
 import androidx.compose.ui.platform.LocalContext
-import com.mariosayago.tfg_iiti.data.ImageUtils
+import com.mariosayago.tfg_iiti.view.components.ImageUtils
 import kotlinx.coroutines.launch
 import java.io.IOException
 

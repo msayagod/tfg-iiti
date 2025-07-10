@@ -1,10 +1,10 @@
-package com.mariosayago.tfg_iiti.data
+package com.mariosayago.tfg_iiti.view.components
 
 import android.content.Context
 import android.net.Uri
 import java.io.File
 import java.io.IOException
-import java.util.*
+import java.util.UUID
 
 // 'Clase' para manejo de imágenes
 object ImageUtils {

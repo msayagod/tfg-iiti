@@ -7,7 +7,9 @@ import androidx.room.Delete
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
+import androidx.room.Transaction
 import androidx.room.Update
+import com.mariosayago.tfg_iiti.model.relations.IncidentWithSlot
 import kotlinx.coroutines.flow.Flow
 
 @Dao
@@ -33,4 +35,58 @@ interface IncidentDao {
 
     @Delete
     suspend fun deleteIncident(incident: Incident)
+
+    // --- Para informes ---
+    @Transaction
+    @Query("""
+    SELECT i.* FROM incidents i
+      JOIN slots s ON s.id = i.machineId
+     WHERE s.machineId = :machineId
+       AND i.date LIKE :day || '%'
+  """)
+    fun getDailyIncidents(machineId: Long, day: String): Flow<List<IncidentWithSlot>>
+
+    @Query("""
+    SELECT *
+      FROM incidents
+     WHERE machineId = :machineId
+       AND date BETWEEN :fromDate AND :toDate
+     ORDER BY date
+  """)
+    fun getIncidentsInRange(
+        machineId: Long,
+        fromDate: String,
+        toDate: String
+    ): Flow<List<Incident>>
+
+    // --- Para informes simplificados ---
+    @Query(
+        """
+    SELECT * 
+      FROM incidents 
+     WHERE machineId = :machineId
+       AND date BETWEEN :fromDate AND :toDate
+     ORDER BY date
+    """
+    )
+    fun getRangeIncidentsRaw(
+        machineId: Long,
+        fromDate: String,
+        toDate: String
+    ): Flow<List<Incident>>
+
+    @Transaction
+    @Query("""
+    SELECT * FROM incidents 
+    WHERE machineId = :machineId 
+      AND date BETWEEN :fromDate AND :toDate
+    ORDER BY date
+""")
+    fun getIncidentsWithSlotInRange(
+        machineId: Long,
+        fromDate: String,
+        toDate: String
+    ): Flow<List<IncidentWithSlot>>
+
+
 }

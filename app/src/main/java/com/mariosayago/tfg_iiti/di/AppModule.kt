@@ -14,6 +14,7 @@ import com.mariosayago.tfg_iiti.data.repository.IncidentRepository
 import com.mariosayago.tfg_iiti.data.repository.MachineRepository
 import com.mariosayago.tfg_iiti.data.repository.OperationRepository
 import com.mariosayago.tfg_iiti.data.repository.ProductRepository
+import com.mariosayago.tfg_iiti.data.repository.ReportRepository
 import com.mariosayago.tfg_iiti.data.repository.SlotRepository
 import com.mariosayago.tfg_iiti.data.repository.VisitRepository
 import com.mariosayago.tfg_iiti.data.repository.VisitScheduleRepository
@@ -45,6 +46,7 @@ object AppModule {
     @Provides fun provideVisitDao(db: AppDatabase): VisitDao = db.visitDao()
     @Provides fun provideVisitScheduleDao(db: AppDatabase): VisitScheduleDao = db.visitScheduleDao()
 
+
     /*** REPOSITORIES ***/
     @Provides @Singleton
     fun provideMachineRepository(dao: MachineDao, dao2: SlotDao): MachineRepository =
@@ -73,4 +75,8 @@ object AppModule {
     @Provides @Singleton
     fun provideVisitScheduleRepository(dao: VisitScheduleDao): VisitScheduleRepository =
         VisitScheduleRepository(dao)
+
+    @Provides @Singleton
+    fun provideReportRepository(dao1: OperationDao, dao2: IncidentDao): ReportRepository =
+        ReportRepository(dao1, dao2)
 }
