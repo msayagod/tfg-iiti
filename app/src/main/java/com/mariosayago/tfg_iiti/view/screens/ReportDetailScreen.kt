@@ -12,13 +12,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.mariosayago.tfg_iiti.model.entities.Incident
-import com.mariosayago.tfg_iiti.model.relations.OperationWithSlot
+import com.mariosayago.tfg_iiti.model.relations.OperationWithSlotAndVisit
+import com.mariosayago.tfg_iiti.model.relations.IncidentWithSlotAndVisit
 import com.mariosayago.tfg_iiti.view.components.createReportPdf
 import com.mariosayago.tfg_iiti.viewmodel.MachineViewModel
 import com.mariosayago.tfg_iiti.viewmodel.ReportViewModel
 import kotlinx.coroutines.flow.map
-import com.mariosayago.tfg_iiti.model.relations.IncidentWithSlot
 
 
 @RequiresApi(Build.VERSION_CODES.O)
@@ -27,7 +26,6 @@ fun ReportDetailScreen(
     machineId: Long,
     fromDate: String,
     toDate: String,
-    onExportPdf: () -> Unit,
     reportVm: ReportViewModel = hiltViewModel(),
     machineVm: MachineViewModel = hiltViewModel()
 ) {
@@ -45,8 +43,10 @@ fun ReportDetailScreen(
     }
 
     // 3) Observamos listas de operaciones e incidencias
-    val ops by reportVm.operations.collectAsState(initial = emptyList<OperationWithSlot>())
-    val incs by reportVm.incidents.collectAsState(initial = emptyList<IncidentWithSlot>())
+    val ops by reportVm.operations.collectAsState(initial = emptyList<OperationWithSlotAndVisit>())
+    val incs by reportVm.incidents.collectAsState(initial = emptyList<IncidentWithSlotAndVisit>())
+
+
 
 
     // 4) Lanzador para “CreateDocument” (elige carpeta+nombre .pdf)
@@ -84,7 +84,9 @@ fun ReportDetailScreen(
             ops.forEach { opWithSlot ->
                 val slot = opWithSlot.slotWithProduct.slot
                 val op   = opWithSlot.operation
-                Text("Slot ${slot.rowIndex}-${slot.colIndex} • ${op.date} • rep: ${op.replenishedUnits}")
+                val visitDate = opWithSlot.visit.date
+                Text("Slot ${slot.rowIndex}-${slot.colIndex} • $visitDate • rep: ${op.replenishedUnits}")
+
             }
         }
 
@@ -97,8 +99,10 @@ fun ReportDetailScreen(
         } else {
             incs.forEach { incWithSlot ->
                 val inc = incWithSlot.incident
-                val slot = incWithSlot.slotWithProduct.slot
-                Text("Slot ${slot.rowIndex}-${slot.colIndex} • ${inc.date} • ${inc.observations.orEmpty()}")
+                val visitDate = incWithSlot.visit.date
+                val slot = incWithSlot.slotWithProduct?.slot
+                val slotLabel = if (slot != null) "Slot ${slot.rowIndex}-${slot.colIndex}" else "Sin slot"
+                Text("$slotLabel • $visitDate • ${inc.observations.orEmpty()}")
             }
 
 

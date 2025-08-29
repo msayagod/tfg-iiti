@@ -8,6 +8,7 @@ import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Transaction
+import com.mariosayago.tfg_iiti.model.relations.VisitWithOperations
 import kotlinx.coroutines.flow.Flow
 
 @Dao
@@ -22,4 +23,18 @@ interface VisitDao {
     @Transaction
     @Query("SELECT * FROM visits WHERE date = :date")
     fun getVisitsWithMachineByDate(date: String): Flow<List<VisitWithMachine>>
+
+    @Query("SELECT * FROM visits WHERE date BETWEEN :start AND :end")
+    suspend fun getVisitsInRange(start: String, end: String): List<Visit>
+
+    @Transaction
+    @Query("SELECT * FROM visits WHERE id = :visitId")
+    fun getVisitWithOperations(visitId: Long): Flow<VisitWithOperations>
+
+    @Transaction
+    @Query("SELECT * FROM visits WHERE date = :date")
+    fun getAllVisitsWithOperationsByDate(date: String): Flow<List<VisitWithOperations>>
+
+
+
 }

@@ -5,10 +5,8 @@ import android.content.Context
 import android.graphics.Paint
 import android.graphics.pdf.PdfDocument
 import android.net.Uri
-import android.os.Build
-import androidx.annotation.RequiresApi
-import com.mariosayago.tfg_iiti.model.relations.IncidentWithSlot
-import com.mariosayago.tfg_iiti.model.relations.OperationWithSlot
+import com.mariosayago.tfg_iiti.model.relations.OperationWithSlotAndVisit
+import com.mariosayago.tfg_iiti.model.relations.IncidentWithSlotAndVisit
 
 /**
  * Crea un informe en PDF con las operaciones e incidencias y lo guarda en la URI indicada.
@@ -21,13 +19,12 @@ import com.mariosayago.tfg_iiti.model.relations.OperationWithSlot
  * @param targetUri   URI donde escribir el PDF (obtenida de CreateDocument).
  * @param contentResolver El content resolver para abrir el stream.
  */
-@RequiresApi(Build.VERSION_CODES.KITKAT)
 fun Context.createReportPdf(
     machineName: String,
     fromDate: String,
     toDate: String,
-    operations: List<OperationWithSlot>,
-    incidents: List<IncidentWithSlot>,
+    operations: List<OperationWithSlotAndVisit>,
+    incidents: List<IncidentWithSlotAndVisit>,
     targetUri: Uri,
     contentResolver: ContentResolver
 ) {
@@ -48,7 +45,10 @@ fun Context.createReportPdf(
     y += 20f
     operations.forEach { opWithSlot ->
         val slot = opWithSlot.slotWithProduct.slot
-        val line = "Slot ${slot.rowIndex}-${slot.colIndex} | Fecha: ${opWithSlot.operation.date} | Repuestos: ${opWithSlot.operation.replenishedUnits}"
+        val date = opWithSlot.visit.date
+        val units = opWithSlot.operation.replenishedUnits
+        val line = "Slot ${slot.rowIndex}-${slot.colIndex} | Fecha: $date | Repuestos: $units"
+
         canvas.drawText(line, 20f, y, paint)
         y += 20f
 
@@ -66,9 +66,11 @@ fun Context.createReportPdf(
         canvas.drawText("Incidencias:", 20f, y, paint)
         y += 20f
         incidents.forEach { incWithSlot ->
-            val slot = incWithSlot.slotWithProduct.slot
-            val line = "Slot ${slot.rowIndex}-${slot.colIndex} | Fecha: ${incWithSlot.incident.date} | ${incWithSlot.incident.observations}"
-            canvas.drawText(line, 20f, y, paint)
+            val slot = incWithSlot.slotWithProduct?.slot
+            val slotDesc = slot?.let { "Slot ${it.rowIndex}-${it.colIndex} | " } ?: ""
+            val date = incWithSlot.visit.date
+            val text = "${slotDesc}Fecha: $date | ${incWithSlot.incident.observations}"
+            canvas.drawText(text, 20f, y, paint)
             y += 20f
 
             if (y > pageInfo.pageHeight - 40) {

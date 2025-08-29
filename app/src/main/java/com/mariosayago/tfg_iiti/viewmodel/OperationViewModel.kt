@@ -17,8 +17,6 @@ class OperationViewModel @Inject constructor(
     private val repository: OperationRepository
 ) : ViewModel() {
 
-    fun getOperationsForSlot(slotId: Long): Flow<List<Operation>> =
-        repository.getOperationsForSlot(slotId)
 
     fun getOperationsWithSlotByDate(date: String): Flow<List<OperationWithSlot>> =
         repository.getOperationsWithSlotByDate(date)

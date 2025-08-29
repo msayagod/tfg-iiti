@@ -6,8 +6,8 @@ import androidx.room.PrimaryKey
 @Entity(tableName = "operations")
 data class Operation(
     @PrimaryKey(autoGenerate = true) val id: Long = 0L,
+    val visitId: Long,
     val slotId: Long,
-    val date: String, // formato ISO
     val observedStock: Int,
     val replenishedUnits: Int,
     val estimatedRevenue: Double,

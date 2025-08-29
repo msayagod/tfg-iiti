@@ -4,6 +4,7 @@ import com.mariosayago.tfg_iiti.data.dao.VisitDao
 import com.mariosayago.tfg_iiti.model.entities.Visit
 import com.mariosayago.tfg_iiti.model.relations.VisitWithMachine
 import kotlinx.coroutines.flow.Flow
+import java.time.LocalDate
 
 class VisitRepository(private val visitDao: VisitDao) {
 
@@ -15,4 +16,8 @@ class VisitRepository(private val visitDao: VisitDao) {
 
     suspend fun insertVisit(visit: Visit): Long =
         visitDao.insertVisit(visit)
+
+    suspend fun getVisitsInRange(from: LocalDate, to: LocalDate): List<Visit> =
+        visitDao.getVisitsInRange(from.toString(), to.toString())
+
 }

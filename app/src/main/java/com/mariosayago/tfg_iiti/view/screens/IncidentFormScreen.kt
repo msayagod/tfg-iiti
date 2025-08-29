@@ -21,40 +21,32 @@ import com.mariosayago.tfg_iiti.viewmodel.IncidentViewModel
 @Composable
 fun IncidentFormScreen(
     machineId: Long,
+    slotId: Long,
+    visitId: Long,
     onSave: () -> Unit,
     viewModel: IncidentViewModel = hiltViewModel()
 ) {
-    var date by remember { mutableStateOf("") }
-    var type by remember { mutableStateOf("") }
-    var obs  by remember { mutableStateOf("") }
+    var obs by remember { mutableStateOf("") }
 
     Column(Modifier.padding(16.dp)) {
-        OutlinedTextField(
-            value = date,
-            onValueChange = { date = it },
-            label = { Text("Fecha (ISO)") }
-        )
+        Text("Creando incidencia para la máquina $machineId")
         Spacer(Modifier.height(8.dp))
-        OutlinedTextField(
-            value = type,
-            onValueChange = { type = it },
-            label = { Text("Tipo de incidencia") }
-        )
-        Spacer(Modifier.height(8.dp))
+
         OutlinedTextField(
             value = obs,
             onValueChange = { obs = it },
             label = { Text("Observaciones") }
         )
         Spacer(Modifier.height(16.dp))
+
         Button(onClick = {
             viewModel.insert(
                 Incident(
-                    machineId   = machineId,
-                    date        = date,
-                    type        = type,
-                    observations= obs,
-                    status      = "open"
+                    machineId = machineId,
+                    slotId = slotId,
+                    visitId = visitId,
+                    observations = obs,
+                    status = "open"
                 )
             )
             onSave()
@@ -63,3 +55,4 @@ fun IncidentFormScreen(
         }
     }
 }
+

@@ -29,7 +29,8 @@ import java.time.LocalDate
 @Composable
 fun OperationListScreen(
     machineId: Long,
-    onSlotClick: (Long) -> Unit,
+    visitId: Long,
+    onSlotClick: (slotId: Long, visitId: Long) -> Unit,
     slotVm: SlotViewModel = hiltViewModel(),
     opVm: OperationViewModel = hiltViewModel()
 ) {
@@ -102,7 +103,7 @@ fun OperationListScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .background(if (isDone) Color.LightGray else Color.Transparent)
-                        .clickable(enabled = !isDone || showOperated) { onSlotClick(sp.slot.id) }
+                        .clickable(enabled = !isDone || showOperated) { onSlotClick(sp.slot.id, visitId) }
                         .padding(8.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {

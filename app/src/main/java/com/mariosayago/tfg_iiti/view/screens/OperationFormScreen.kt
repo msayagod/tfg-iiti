@@ -28,6 +28,7 @@ import java.time.LocalDate
 @Composable
 fun OperationFormScreen(
     slotId: Long,
+    visitId: Long,
     onDone: () -> Unit,
     opVm: OperationViewModel = hiltViewModel(),
     slotVm: SlotViewModel = hiltViewModel()
@@ -172,7 +173,7 @@ fun OperationFormScreen(
                     val op = Operation(
                         id = existingOp?.id ?: 0L, // id de la op si ya existe para el dia de hoy
                         slotId = slot.id,
-                        date = todayStr,
+                        visitId = visitId,
                         observedStock = observedStock,
                         replenishedUnits = unitsToReplenish,
                         estimatedRevenue = estimatedRevenue

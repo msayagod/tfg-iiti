@@ -24,16 +24,16 @@ fun IncidentDetailScreen(
     onBack: () -> Unit,
     viewModel: IncidentViewModel = hiltViewModel()
 ) {
-    val incident by viewModel.getIncidentById(incidentId).collectAsState(initial = null)
-    incident?.let {
+    val incidentWithVisit by viewModel.getIncidentById(incidentId).collectAsState(initial = null)
+    incidentWithVisit?.let {
+        val incident = it.incident
         Column(Modifier.padding(16.dp)) {
-            Text("Incidencia #${it.id}", style = MaterialTheme.typography.titleLarge)
+            Text("Incidencia #${incident.id}", style = MaterialTheme.typography.titleLarge)
             Spacer(Modifier.height(8.dp))
-            Text("Máquina: ${it.machineId}")
-            Text("Fecha: ${it.date}")
-            Text("Tipo: ${it.type}")
-            Text("Observaciones: ${it.observations ?: "—"}")
-            Text("Estado: ${it.status}")
+            Text("Máquina: ${incident.machineId}")
+            Text("Fecha: ${it.visit.date}") // ✅ aquí ya funciona
+            Text("Observaciones: ${incident.observations ?: "—"}")
+            Text("Estado: ${incident.status}")
 
             Spacer(Modifier.height(16.dp))
             Row(
@@ -41,20 +41,19 @@ fun IncidentDetailScreen(
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 Button(onClick = {
-                    viewModel.closeIncident(it.id)
+                    viewModel.closeIncident(incident.id)
                     onBack()
                 }) {
                     Text("Cerrar")
                 }
                 Button(onClick = {
-                    viewModel.delete(it)
+                    viewModel.delete(incident)
                     onBack()
                 }) {
                     Text("Eliminar")
                 }
                 Button(onClick = onBack) {
                     Text("Volver")
-
                 }
             }
         }

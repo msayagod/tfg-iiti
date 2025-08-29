@@ -29,4 +29,6 @@ interface VisitScheduleDao {
     @Query("DELETE FROM visit_schedules WHERE machineId = :mid")
     suspend fun deleteByMachine(mid: Long)
 
+
+
 }

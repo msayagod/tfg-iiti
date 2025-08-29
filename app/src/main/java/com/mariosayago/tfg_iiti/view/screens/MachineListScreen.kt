@@ -1,6 +1,8 @@
 package com.mariosayago.tfg_iiti.view.screens
 
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
@@ -12,6 +14,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -36,15 +39,26 @@ fun MachineListScreen(
         }
     ) { innerPadding ->
         LazyColumn(Modifier.padding(innerPadding)) {
-            items(machines) { m: Machine ->
-                Text(
-                    text = "${m.name} — ${m.location}",
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clickable { onMachineClick(m.id) }
-                        .padding(16.dp)
-                )
-                HorizontalDivider()
+            if (machines.isEmpty()) {
+                item {
+                    Box(
+                        Modifier.fillMaxSize().padding(32.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text("No hay máquinas registradas.")
+                    }
+                }
+            } else {
+                items(machines) { m: Machine ->
+                    Text(
+                        text = "${m.name} — ${m.location}",
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable { onMachineClick(m.id) }
+                            .padding(16.dp)
+                    )
+                    HorizontalDivider()
+                }
             }
         }
     }

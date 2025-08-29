@@ -21,6 +21,7 @@ import com.mariosayago.tfg_iiti.model.entities.Incident
 import com.mariosayago.tfg_iiti.viewmodel.IncidentViewModel
 import com.mariosayago.tfg_iiti.viewmodel.MachineViewModel
 import androidx.compose.runtime.getValue
+import com.mariosayago.tfg_iiti.model.relations.IncidentWithSlotAndVisit
 
 
 @Composable
@@ -40,16 +41,16 @@ fun ClosedIncidentListScreen(
 
 @Composable
 fun IncidentRow(
-    incident: Incident,
+    incidentWithSlot: IncidentWithSlotAndVisit,
     onIncidentClick: (Long) -> Unit,
     modifier: Modifier = Modifier,
     machineViewModel: MachineViewModel = hiltViewModel()
 ) {
-    // 1) Recupera la lista de máquinas para obtener el nombre
+    val incident = incidentWithSlot.incident
+    val visitDate = incidentWithSlot.visit.date
     val machines by machineViewModel.machines.collectAsState()
     val machineName = machines.find { it.id == incident.machineId }?.name ?: "?"
 
-    // 2) Dibuja la fila
     Row(
         modifier = modifier
             .fillMaxWidth()
@@ -59,8 +60,12 @@ fun IncidentRow(
     ) {
         Column {
             Text(text = machineName, style = MaterialTheme.typography.titleMedium)
-            Text(text = "${incident.type} — ${incident.date}", style = MaterialTheme.typography.bodySmall)
+            Text(
+                text = "${incident.observations ?: "Sin observaciones"} — $visitDate",
+                style = MaterialTheme.typography.bodySmall
+            )
         }
         Text(text = "Ver", color = MaterialTheme.colorScheme.primary)
     }
 }
+

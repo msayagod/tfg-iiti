@@ -5,14 +5,17 @@ import androidx.annotation.RequiresApi
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.mariosayago.tfg_iiti.data.repository.MachineRepository
+import com.mariosayago.tfg_iiti.data.repository.VisitRepository
 import com.mariosayago.tfg_iiti.model.entities.VisitSchedule
 import com.mariosayago.tfg_iiti.data.repository.VisitScheduleRepository
+import com.mariosayago.tfg_iiti.model.CalendarVisit
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
@@ -24,6 +27,7 @@ import kotlin.math.min
 @HiltViewModel
 class VisitScheduleViewModel @Inject constructor(
     internal val scheduleRepo: VisitScheduleRepository,
+    private val visitRepo: VisitRepository,
     private val machineRepo: MachineRepository
 ) : ViewModel() {
 
@@ -61,6 +65,47 @@ class VisitScheduleViewModel @Inject constructor(
             else -> List(3) { today.plusDays(it.toLong()) }
         }
     }
+
+    // Helpers para generar fechas según frecuencia
+    @RequiresApi(Build.VERSION_CODES.O) // Necesario para LocalDate.now()
+    fun generateOccurrencesInRange(
+        schedule: VisitSchedule,
+        from: LocalDate,
+        to: LocalDate
+    ): List<LocalDate> {
+        return when (schedule.frequency) {
+            "d" -> generateSequence(from) { it.plusDays(1) }
+                .takeWhile { it <= to }
+                .toList()
+
+            "w" -> {
+                val days = schedule.daysOfWeek
+                    .split(",")
+                    .mapNotNull { it.toIntOrNull() }
+                    .filter { it in 1..7 }
+
+                generateSequence(from) { it.plusDays(1) }
+                    .filter { days.contains(it.dayOfWeek.value) }
+                    .takeWhile { it <= to }
+                    .toList()
+            }
+
+            "m" -> {
+                val day = schedule.dayOfMonth ?: return emptyList()
+                generateSequence(from.withDayOfMonth(1)) { it.plusMonths(1) }
+                    .mapNotNull { monthStart ->
+                        val lastDay = monthStart.lengthOfMonth()
+                        val dom = day.coerceAtMost(lastDay)
+                        monthStart.withDayOfMonth(dom)
+                    }
+                    .filter { it in from..to }
+                    .toList()
+            }
+
+            else -> emptyList()
+        }
+    }
+
 
     // Mapeo simple de código → texto
     private val freqLabels = mapOf(
@@ -116,6 +161,40 @@ class VisitScheduleViewModel @Inject constructor(
     @RequiresApi(Build.VERSION_CODES.O)
     val schedules: StateFlow<List<Ui>> = rawSchedules
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
+
+    @RequiresApi(Build.VERSION_CODES.O)
+    suspend fun getCalendarVisitsForMonth(year: Int, month: Int): List<CalendarVisit> {
+        val from = LocalDate.of(year, month, 1)
+        val to = from.withDayOfMonth(from.lengthOfMonth())
+
+        val visits = visitRepo.getVisitsInRange(from, to)
+        val schedules = scheduleRepo.getAllSchedules().first()  // o con collect si estás en Compose
+        val machines = machineRepo.getAllMachines().first()
+
+        val realVisits = visits.mapNotNull { v ->
+            val machine = machines.find { it.id == v.machineId } ?: return@mapNotNull null
+            CalendarVisit(
+                machineId = v.machineId,
+                machineName = machine.name,
+                date = LocalDate.parse(v.date), // formato ISO
+                isRecurring = false
+            )
+        }
+
+        val recurringVisits = schedules.flatMap { s ->
+            val machine = machines.find { it.id == s.machineId } ?: return@flatMap emptyList()
+            generateOccurrencesInRange(s, from, to).map { date ->
+                CalendarVisit(
+                    machineId = s.machineId,
+                    machineName = machine.name,
+                    date = date,
+                    isRecurring = true
+                )
+            }
+        }
+
+        return (realVisits + recurringVisits).sortedBy { it.date }
+    }
 
 
 }

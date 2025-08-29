@@ -81,17 +81,26 @@ fun ProductListScreen(
 
 
     Box(Modifier.fillMaxSize()) {
-        // Lista de productos
-        LazyColumn {
-            items(products) { p ->
-                Text(
-                    text = "${p.name} — €${"%.2f".format(p.price)}",
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clickable { onEditProduct(p.id) } // Navegar a la pantalla de edición
-                        .padding(16.dp)
-                )
-                HorizontalDivider()
+
+        //Mensaje si no hay productos
+        if (products.isEmpty()) {
+            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                Text("No hay productos disponibles.")
+            }
+
+            // Lista de productos
+        } else {
+            LazyColumn {
+                items(products) { p ->
+                    Text(
+                        text = "${p.name} — €${"%.2f".format(p.price)}",
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable { onEditProduct(p.id) } // Navegar a la pantalla de edición
+                            .padding(16.dp)
+                    )
+                    HorizontalDivider()
+                }
             }
         }
 

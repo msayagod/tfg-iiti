@@ -9,7 +9,7 @@ import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Transaction
 import androidx.room.Update
-import com.mariosayago.tfg_iiti.model.relations.IncidentWithSlot
+import com.mariosayago.tfg_iiti.model.relations.IncidentWithSlotAndVisit
 import kotlinx.coroutines.flow.Flow
 
 @Dao
@@ -18,17 +18,34 @@ interface IncidentDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertIncident(incident: Incident): Long
 
-    @Query("SELECT * FROM incidents WHERE machineId = :machineId ORDER BY date DESC")
-    fun getIncidentsByMachine(machineId: Long): Flow<List<Incident>>
-
     @Query("SELECT * FROM incidents WHERE id = :incidentId")
     fun getIncidentById(incidentId: Long): Flow<Incident?> // El ? es para indicar que puede ser null, sin eso daría error si no lo encontrara
 
-    @Query("SELECT * FROM incidents WHERE status = 'open' ORDER BY date DESC")
-    fun getOpenIncidents(): Flow<List<Incident>>
+    @Transaction
+    @Query("SELECT * FROM incidents WHERE id = :incidentId")
+    fun getIncidentWithSlotAndVisitById(incidentId: Long): Flow<IncidentWithSlotAndVisit?>
 
-    @Query("SELECT * FROM incidents WHERE status = 'closed' ORDER BY date DESC")
-    fun getClosedIncidents(): Flow<List<Incident>>
+    @Transaction
+    @Query("""
+    SELECT i.*
+      FROM incidents i
+      JOIN visits v ON v.id = i.visitId
+     WHERE i.status = 'open'
+     ORDER BY v.date DESC
+""")
+    fun getOpenIncidents(): Flow<List<IncidentWithSlotAndVisit>>
+
+
+    @Transaction
+    @Query("""
+    SELECT i.*
+      FROM incidents i
+      JOIN visits v ON v.id = i.visitId
+     WHERE i.status = 'closed'
+     ORDER BY v.date DESC
+""")
+    fun getClosedIncidents(): Flow<List<IncidentWithSlotAndVisit>>
+
 
     @Update(onConflict = OnConflictStrategy.REPLACE) // Si hay conflictos, actualiza
     suspend fun updateIncident(incident: Incident): Int
@@ -37,56 +54,28 @@ interface IncidentDao {
     suspend fun deleteIncident(incident: Incident)
 
     // --- Para informes ---
-    @Transaction
-    @Query("""
-    SELECT i.* FROM incidents i
-      JOIN slots s ON s.id = i.machineId
-     WHERE s.machineId = :machineId
-       AND i.date LIKE :day || '%'
-  """)
-    fun getDailyIncidents(machineId: Long, day: String): Flow<List<IncidentWithSlot>>
 
-    @Query("""
-    SELECT *
-      FROM incidents
-     WHERE machineId = :machineId
-       AND date BETWEEN :fromDate AND :toDate
-     ORDER BY date
-  """)
-    fun getIncidentsInRange(
-        machineId: Long,
-        fromDate: String,
-        toDate: String
-    ): Flow<List<Incident>>
 
     // --- Para informes simplificados ---
-    @Query(
-        """
-    SELECT * 
-      FROM incidents 
-     WHERE machineId = :machineId
-       AND date BETWEEN :fromDate AND :toDate
-     ORDER BY date
-    """
-    )
-    fun getRangeIncidentsRaw(
-        machineId: Long,
-        fromDate: String,
-        toDate: String
-    ): Flow<List<Incident>>
+
+
 
     @Transaction
     @Query("""
-    SELECT * FROM incidents 
-    WHERE machineId = :machineId 
-      AND date BETWEEN :fromDate AND :toDate
-    ORDER BY date
+    SELECT i.*
+      FROM incidents i
+      JOIN visits v ON v.id = i.visitId
+     WHERE i.machineId = :machineId
+       AND v.date BETWEEN :fromDate AND :toDate
+     ORDER BY v.date
 """)
-    fun getIncidentsWithSlotInRange(
+
+    fun getIncidentsWithSlotAndVisitInRange(
         machineId: Long,
         fromDate: String,
         toDate: String
-    ): Flow<List<IncidentWithSlot>>
+    ): List<IncidentWithSlotAndVisit>
+
 
 
 }

@@ -2,6 +2,7 @@ package com.mariosayago.tfg_iiti.view.screens
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -54,36 +55,49 @@ fun IncidentListScreen(
         }
 
         LazyColumn(Modifier.fillMaxSize()) {
-            items(incidents) { inc ->
-                // 2. Buscamos el nombre de la máquina en la lista
-                val machineName =
-                    machines.find { it.id == inc.machineId }?.name ?: "Máquina desconocida"
+            if (incidents.isEmpty()) {
+                item {
+                    Box(
+                        Modifier.fillMaxSize().padding(32.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text("No hay incidencias abiertas.")
+                    }
+                }
+            } else {
+                items(incidents) { inc ->
+                    // 2. Buscamos el nombre de la máquina en la lista
+                    val machineName =
+                        machines.find { it.id == inc.visit.machineId }?.name
+                            ?: "Máquina desconocida"
 
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clickable { onIncidentClick(inc.id) }
-                        .padding(16.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Column {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable { onIncidentClick(inc.incident.id) }
+                            .padding(16.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Column {
+                            Text(
+                                text = machineName,
+                                style = MaterialTheme.typography.titleMedium
+                            )
+                            Spacer(Modifier.height(4.dp))
+                            Text(
+                                text = "Incidencia — ${inc.visit.date}",
+                                style = MaterialTheme.typography.bodySmall
+                            )
+
+                        }
                         Text(
-                            text = machineName,
-                            style = MaterialTheme.typography.titleMedium
-                        )
-                        Spacer(Modifier.height(4.dp))
-                        Text(
-                            text = "${inc.type} — ${inc.date}",
-                            style = MaterialTheme.typography.bodySmall
+                            text = "Ver",
+                            color = MaterialTheme.colorScheme.primary
                         )
                     }
-                    Text(
-                        text = "Ver",
-                        color = MaterialTheme.colorScheme.primary
-                    )
+                    HorizontalDivider()
                 }
-                HorizontalDivider()
             }
         }
     }
